@@ -145,6 +145,10 @@
             <author>true</author>
             <version>true</version>
             <notimestamp>true</notimestamp>
+            <links>
+              <!-- Use an HTTPS URL to the JSE docs -->
+              <link>https://docs.oracle.com/javase/8/docs/api/</link>
+            </links>
           </configuration>
         </plugin>
 
