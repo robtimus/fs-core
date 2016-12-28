@@ -25,6 +25,7 @@ import java.util.Set;
  * A utility class for {@link PosixFilePermission}.
  *
  * @author Rob Spoor
+ * @since 1.1
  */
 public final class PosixFilePermissionSupport {
 
