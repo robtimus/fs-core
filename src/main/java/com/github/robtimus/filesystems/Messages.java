@@ -17,15 +17,8 @@
 
 package com.github.robtimus.filesystems;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
@@ -40,16 +33,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.spi.FileSystemProvider;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Map;
-import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
-import java.util.ResourceBundle.Control;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 
@@ -60,7 +47,7 @@ import java.util.regex.PatternSyntaxException;
  */
 public final class Messages {
 
-    private static final ResourceBundle BUNDLE = ResourceBundle.getBundle("com.github.robtimus.filesystems.fs", new UTF8Control()); //$NON-NLS-1$
+    private static final ResourceBundle BUNDLE = ResourceBundle.getBundle("com.github.robtimus.filesystems.fs", UTF8Control.INSTANCE); //$NON-NLS-1$
 
     private Messages() {
         throw new Error("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
@@ -848,56 +835,6 @@ public final class Messages {
          */
         public IllegalArgumentException hasNoUserInfo(URI uri) {
             return new IllegalArgumentException(getMessage("uri.hasNoUserInfo", uri)); //$NON-NLS-1$
-        }
-    }
-
-    /**
-     * A resource bundle control that uses UTF-8 instead of the default encoding.
-     *
-     * @author Rob Spoor
-     */
-    private static final class UTF8Control extends Control {
-        @Override
-        public ResourceBundle newBundle(String baseName, Locale locale, String format, final ClassLoader loader, final boolean reload)
-                throws IllegalAccessException, InstantiationException, IOException {
-            if (!"java.properties".equals(format)) { //$NON-NLS-1$
-                return super.newBundle(baseName, locale, format, loader, reload);
-            }
-            String bundleName = toBundleName(baseName, locale);
-            ResourceBundle bundle = null;
-            final String resourceName = toResourceName(bundleName, "properties"); //$NON-NLS-1$
-            InputStream in = null;
-            try {
-                in = AccessController.doPrivileged(new PrivilegedExceptionAction<InputStream>() {
-                    @Override
-                    @SuppressWarnings("resource")
-                    public InputStream run() throws Exception {
-                        InputStream in = null;
-                        if (reload) {
-                            URL url = loader.getResource(resourceName);
-                            if (url != null) {
-                                URLConnection connection = url.openConnection();
-                                if (connection != null) {
-                                    // Disable caches to get fresh data for reloading.
-                                    connection.setUseCaches(false);
-                                    in = connection.getInputStream();
-                                }
-                            }
-                        } else {
-                            in = loader.getResourceAsStream(resourceName);
-                        }
-                        return in;
-                    }
-                });
-            } catch (PrivilegedActionException e) {
-                throw (IOException) e.getException();
-            }
-            if (in != null) {
-                try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
-                    bundle = new PropertyResourceBundle(reader);
-                }
-            }
-            return bundle;
         }
     }
 }
