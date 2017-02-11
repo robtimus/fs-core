@@ -54,7 +54,7 @@ public final class PathMatcherSupport {
         String expression = syntaxAndPattern.substring(index + 1);
 
         if ("glob".equals(syntax)) { //$NON-NLS-1$
-            return PathMatcherSupport.toGlobPattern(expression);
+            return toGlobPattern(expression);
         }
         if ("regex".equals(syntax)) { //$NON-NLS-1$
             return Pattern.compile(expression);
