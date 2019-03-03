@@ -29,6 +29,13 @@
   </skin>
 
   <body>
+    <!-- Workaround to get pretty-printing enabled again. See https://plus.google.com/+clementescoffier/posts/8MQM8Y4CTeu -->
+    <head><![CDATA[<script type="text/javascript">
+  $(document).ready(function () {
+    $(".source").addClass("prettyprint");
+    prettyPrint();
+  });
+</script>]]></head>
     <menu name="fs-core">
       <item name="Overview" href="index.html" />
       <item name="Download" href="download.html" />
