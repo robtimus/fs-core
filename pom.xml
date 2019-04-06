@@ -21,7 +21,7 @@
 
   <groupId>com.github.robtimus</groupId>
   <artifactId>fs-core</artifactId>
-  <version>1.3-SNAPSHOT</version>
+  <version>1.3</version>
   <packaging>jar</packaging>
 
   <name>fs-core</name>
@@ -46,7 +46,7 @@
   <scm>
     <connection>scm:git:git@github.com:robtimus/fs-core.git</connection>
     <developerConnection>scm:git:git@github.com:robtimus/fs-core.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>fs-core-1.3</tag>
     <url>https://github.com/robtimus/fs-core</url>
   </scm>
 
