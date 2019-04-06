@@ -18,7 +18,11 @@
 package com.github.robtimus.filesystems;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
@@ -563,6 +567,52 @@ public final class Messages {
          */
         public IllegalStateException iteratorAlreadyReturned() {
             return new IllegalStateException(getMessage("directoryStream.iteratorAlreadyReturned")); //$NON-NLS-1$
+        }
+    }
+
+    /**
+     * Returns an object for providing translated messages and exceptions for file channels.
+     *
+     * @return An object for providing translated messages and exceptions for file channels.
+     */
+    public static FileChannelMessages fileChannel() {
+        return FileChannelMessages.INSTANCE;
+    }
+
+    /**
+     * A utility class for providing translated messages and exceptions for file channels.
+     *
+     * @author Rob Spoor
+     */
+    public static final class FileChannelMessages {
+
+        private static final FileChannelMessages INSTANCE = new FileChannelMessages();
+
+        private FileChannelMessages() {
+            super();
+        }
+
+        /**
+         * Creates an exception that can be thrown if {@link FileChannel#transferTo(long, long, WritableByteChannel)} or
+         * {@link FileChannel#transferFrom(ReadableByteChannel, long, long)} is called with a negative count.
+         *
+         * @param count The negative count.
+         * @return The created exception.
+         */
+        public IllegalArgumentException negativeCount(long count) {
+            return new IllegalArgumentException(getMessage("fileChannel.negativeCount", count)); //$NON-NLS-1$
+        }
+
+        /**
+         * Creates an exception that can be thrown if {@link FileChannel#read(ByteBuffer, long)}, {@link FileChannel#write(ByteBuffer, long)},
+         * {@link FileChannel#transferTo(long, long, WritableByteChannel)} or {@link FileChannel#transferFrom(ReadableByteChannel, long, long)}
+         * is called with a negative position.
+         *
+         * @param position The negative position.
+         * @return The created exception.
+         */
+        public IllegalArgumentException negativePosition(long position) {
+            return new IllegalArgumentException(getMessage("fileChannel.negativePosition", position)); //$NON-NLS-1$
         }
     }
 
