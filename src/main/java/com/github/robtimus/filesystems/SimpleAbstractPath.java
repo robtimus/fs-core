@@ -245,6 +245,7 @@ public abstract class SimpleAbstractPath extends AbstractPath {
      * It will then check if the actual path of this path starts with the actual path of the given path.
      */
     @Override
+    @SuppressWarnings("resource")
     public boolean startsWith(Path other) {
         if (getFileSystem() != other.getFileSystem() || getClass() != other.getClass()) {
             return false;
@@ -272,6 +273,7 @@ public abstract class SimpleAbstractPath extends AbstractPath {
      * It will then check if the actual path of this path ends with the actual path of the given path.
      */
     @Override
+    @SuppressWarnings("resource")
     public boolean endsWith(Path other) {
         if (getFileSystem() != other.getFileSystem() || getClass() != other.getClass()) {
             return false;
@@ -460,6 +462,7 @@ public abstract class SimpleAbstractPath extends AbstractPath {
      * and with the same actual path.
      */
     @Override
+    @SuppressWarnings("resource")
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;

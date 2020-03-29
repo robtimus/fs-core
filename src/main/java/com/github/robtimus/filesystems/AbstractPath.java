@@ -67,6 +67,7 @@ public abstract class AbstractPath implements Path {
      * string into a {@code Path}, then calls {@link #startsWith(Path)}.
      */
     @Override
+    @SuppressWarnings("resource")
     public boolean startsWith(String other) {
         return startsWith(getFileSystem().getPath(other));
     }
@@ -78,6 +79,7 @@ public abstract class AbstractPath implements Path {
      * string into a {@code Path}, then calls {@link #endsWith(Path)}.
      */
     @Override
+    @SuppressWarnings("resource")
     public boolean endsWith(String other) {
         return endsWith(getFileSystem().getPath(other));
     }
@@ -89,6 +91,7 @@ public abstract class AbstractPath implements Path {
      * string into a {@code Path}, then calls {@link #resolve(Path)}.
      */
     @Override
+    @SuppressWarnings("resource")
     public Path resolve(String other) {
         return resolve(getFileSystem().getPath(other));
     }
@@ -100,6 +103,7 @@ public abstract class AbstractPath implements Path {
      * string into a {@code Path}, then calls {@link #resolveSibling(Path)}.
      */
     @Override
+    @SuppressWarnings("resource")
     public Path resolveSibling(String other) {
         return resolveSibling(getFileSystem().getPath(other));
     }

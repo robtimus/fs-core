@@ -69,6 +69,7 @@ public final class FileSystemProviderSupport {
      * @throws NullPointerException If the given {@code InputStream} is {@code null}.
      * @throws IllegalArgumentException If the given size of initial position is negative.
      */
+    @SuppressWarnings("resource")
     public static SeekableByteChannel createSeekableByteChannel(final InputStream in, final long size, final long initialPosition) {
         Objects.requireNonNull(in);
         if (size < 0) {
@@ -151,6 +152,7 @@ public final class FileSystemProviderSupport {
      * @throws NullPointerException If the given {@code OutputStream} is {@code null}.
      * @throws IllegalArgumentException If the given initial position is negative.
      */
+    @SuppressWarnings("resource")
     public static SeekableByteChannel createSeekableByteChannel(final OutputStream out, final long initialPosition) {
         Objects.requireNonNull(out);
         if (initialPosition < 0) {
