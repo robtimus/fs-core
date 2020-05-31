@@ -20,7 +20,7 @@ package com.github.robtimus.filesystems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import java.nio.file.FileSystem;
 import java.nio.file.Paths;
@@ -167,12 +167,7 @@ public class SimpleAbstractPathTest {
     }
 
     private void testInvalidSubpathIndexes(String path, int beginIndex, int endIndex) {
-        try {
-            new TestPath(path, fs).subpath(beginIndex, endIndex);
-            fail("Expected IllegalArgumentException");
-        } catch (@SuppressWarnings("unused") IllegalArgumentException e) {
-            // expected
-        }
+        assertThrows(IllegalArgumentException.class, () -> new TestPath(path, fs).subpath(beginIndex, endIndex));
     }
 
     @Test
@@ -367,11 +362,6 @@ public class SimpleAbstractPathTest {
     }
 
     private void testRelativizeAbsoluteMismatch(String path, String other) {
-        try {
-            new TestPath(path, fs).relativize(new TestPath(other, fs));
-            fail("expected IllegalArgumentException");
-        } catch (@SuppressWarnings("unused") IllegalArgumentException e) {
-            // expected
-        }
+        assertThrows(IllegalArgumentException.class, () -> new TestPath(path, fs).relativize(new TestPath(other, fs)));
     }
 }
