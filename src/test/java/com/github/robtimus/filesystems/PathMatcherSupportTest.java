@@ -17,12 +17,12 @@
 
 package com.github.robtimus.filesystems;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings({ "nls", "javadoc" })
 public class PathMatcherSupportTest {
@@ -35,14 +35,16 @@ public class PathMatcherSupportTest {
         assertEquals("", PathMatcherSupport.toPattern("regex:").pattern());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testToPatternNoSyntax() {
-        PathMatcherSupport.toPattern(".*");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> PathMatcherSupport.toPattern(".*"));
+        assertEquals(Messages.pathMatcher().syntaxNotFound(".*").getMessage(), exception.getMessage());
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testToPatternInvalidSyntax() {
-        PathMatcherSupport.toPattern("java:.*");
+        UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> PathMatcherSupport.toPattern("java:.*"));
+        assertEquals(Messages.pathMatcher().unsupportedPathMatcherSyntax("java").getMessage(), exception.getMessage());
     }
 
     @Test
@@ -77,17 +79,13 @@ public class PathMatcherSupportTest {
         assertEquals(regex, pattern.pattern());
 
         for (String example : examples) {
-            assertTrue(example + " must match glob " + glob, pattern.matcher(example).matches());
+            assertTrue(pattern.matcher(example).matches(), example + " must match glob " + glob);
         }
     }
 
     private void testInvalidGlobPattern(String glob, int index) {
-        try {
-            PathMatcherSupport.toGlobPattern(glob);
-            fail("expected PatternSyntaxException");
-        } catch (PatternSyntaxException e) {
-            assertEquals(glob, e.getPattern());
-            assertEquals(index, e.getIndex());
-        }
+        PatternSyntaxException exception = assertThrows(PatternSyntaxException.class, () -> PathMatcherSupport.toGlobPattern(glob));
+        assertEquals(glob, exception.getPattern());
+        assertEquals(index, exception.getIndex());
     }
 }

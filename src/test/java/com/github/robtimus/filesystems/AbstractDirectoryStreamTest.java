@@ -17,8 +17,11 @@
 
 package com.github.robtimus.filesystems;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import java.io.IOException;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
@@ -29,16 +32,18 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-@RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({ "nls", "javadoc" })
 public class AbstractDirectoryStreamTest {
 
-    @Mock private FileSystem fs;
+    private FileSystem fs;
+
+    @BeforeEach
+    public void init() {
+        fs = mock(FileSystem.class);
+    }
 
     @Test
     public void testIterator() throws IOException {
@@ -102,32 +107,33 @@ public class AbstractDirectoryStreamTest {
         assertEquals(expected, names);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testIteratorAfterClose() throws IOException {
         try (DirectoryStream<Path> stream = new TestDirectoryStream(0, AcceptAllFilter.INSTANCE)) {
             stream.close();
-            stream.iterator();
+            IllegalStateException exception = assertThrows(IllegalStateException.class, stream::iterator);
+            assertEquals(Messages.directoryStream().closed().getMessage(), exception.getMessage());
         }
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testIteratorAfterIterator() throws IOException {
-        boolean iteratorCalled = false;
         try (DirectoryStream<Path> stream = new TestDirectoryStream(0, AcceptAllFilter.INSTANCE)) {
             stream.iterator();
-            iteratorCalled = true;
-            stream.iterator();
-        } finally {
-            assertTrue(iteratorCalled);
+            IllegalStateException exception = assertThrows(IllegalStateException.class, stream::iterator);
+            assertEquals(Messages.directoryStream().iteratorAlreadyReturned().getMessage(), exception.getMessage());
         }
     }
 
-    @Test(expected = DirectoryIteratorException.class)
+    @Test
     public void testThrowWhileIterating() throws IOException {
         try (DirectoryStream<Path> stream = new TestDirectoryStream(100, ThrowingFilter.INSTANCE)) {
-            for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext(); ) {
-                iterator.next();
-            }
+            DirectoryIteratorException exception = assertThrows(DirectoryIteratorException.class, () -> {
+                for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext(); ) {
+                    iterator.next();
+                }
+            });
+            assertThat(exception.getCause(), instanceOf(IOException.class));
         }
     }
 

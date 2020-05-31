@@ -17,22 +17,25 @@
 
 package com.github.robtimus.filesystems;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 import java.nio.file.FileSystem;
 import java.nio.file.Paths;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-@RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({ "nls", "javadoc" })
 public class SimpleAbstractPathTest {
 
-    @Mock private FileSystem fs;
+    private FileSystem fs;
+
+    @BeforeEach
+    public void init() {
+        fs = mock(FileSystem.class);
+    }
 
     @Test
     public void testNormalization() {
