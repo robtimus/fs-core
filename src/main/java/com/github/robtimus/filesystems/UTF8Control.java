@@ -58,27 +58,7 @@ public final class UTF8Control extends Control {
         final String resourceName = toResourceName(bundleName, "properties"); //$NON-NLS-1$
         InputStream in = null;
         try {
-            in = AccessController.doPrivileged(new PrivilegedExceptionAction<InputStream>() {
-                @Override
-                @SuppressWarnings("resource")
-                public InputStream run() throws Exception {
-                    InputStream in = null;
-                    if (reload) {
-                        URL url = loader.getResource(resourceName);
-                        if (url != null) {
-                            URLConnection connection = url.openConnection();
-                            if (connection != null) {
-                                // Disable caches to get fresh data for reloading.
-                                connection.setUseCaches(false);
-                                in = connection.getInputStream();
-                            }
-                        }
-                    } else {
-                        in = loader.getResourceAsStream(resourceName);
-                    }
-                    return in;
-                }
-            });
+            in = AccessController.doPrivileged((PrivilegedExceptionAction<InputStream>) () -> readResource(resourceName, loader, reload));
         } catch (PrivilegedActionException e) {
             throw (IOException) e.getException();
         }
@@ -88,5 +68,24 @@ public final class UTF8Control extends Control {
             }
         }
         return bundle;
+    }
+
+    @SuppressWarnings("resource")
+    private InputStream readResource(String resourceName, ClassLoader loader, boolean reload) throws IOException {
+        InputStream in = null;
+        if (reload) {
+            URL url = loader.getResource(resourceName);
+            if (url != null) {
+                URLConnection connection = url.openConnection();
+                if (connection != null) {
+                    // Disable caches to get fresh data for reloading.
+                    connection.setUseCaches(false);
+                    in = connection.getInputStream();
+                }
+            }
+        } else {
+            in = loader.getResourceAsStream(resourceName);
+        }
+        return in;
     }
 }
