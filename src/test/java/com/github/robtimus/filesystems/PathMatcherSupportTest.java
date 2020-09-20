@@ -24,11 +24,11 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "nls", "javadoc" })
-public class PathMatcherSupportTest {
+@SuppressWarnings("nls")
+class PathMatcherSupportTest {
 
     @Test
-    public void testToPattern() {
+    void testToPattern() {
         assertEquals("^[^/]*$", PathMatcherSupport.toPattern("glob:*").pattern());
         assertEquals("^$", PathMatcherSupport.toPattern("glob:").pattern());
         assertEquals(".*", PathMatcherSupport.toPattern("regex:.*").pattern());
@@ -36,19 +36,19 @@ public class PathMatcherSupportTest {
     }
 
     @Test
-    public void testToPatternNoSyntax() {
+    void testToPatternNoSyntax() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> PathMatcherSupport.toPattern(".*"));
         assertEquals(Messages.pathMatcher().syntaxNotFound(".*").getMessage(), exception.getMessage());
     }
 
     @Test
-    public void testToPatternInvalidSyntax() {
+    void testToPatternInvalidSyntax() {
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> PathMatcherSupport.toPattern("java:.*"));
         assertEquals(Messages.pathMatcher().unsupportedPathMatcherSyntax("java").getMessage(), exception.getMessage());
     }
 
     @Test
-    public void testToGlobPattern() {
+    void testToGlobPattern() {
         // examples taken from FileSystem.getPathMatcher javadoc
         testToGlobPattern("*.java", "^[^/]*\\.java$");
         testToGlobPattern("*.*", "^[^/]*\\.[^/]*$");

@@ -40,7 +40,7 @@ public final class PosixFilePermissionSupport {
     private static final int S_IXOTH = 01;
 
     private PosixFilePermissionSupport() {
-        throw new Error("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
+        throw new IllegalStateException("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
     }
 
     /**

@@ -28,8 +28,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@SuppressWarnings({ "nls", "javadoc" })
-public class PosixFilePermissionSupportTest {
+@SuppressWarnings("nls")
+class PosixFilePermissionSupportTest {
 
     private static final PosixFilePermission[] ALL_PERMISSIONS = PosixFilePermission.values();
 
@@ -555,13 +555,13 @@ public class PosixFilePermissionSupportTest {
 
     @ParameterizedTest(name = "mask: {0}, permissions: {1}")
     @MethodSource("testArguments")
-    public void testFromMask(int mask, Set<PosixFilePermission> permissions) {
+    void testFromMask(int mask, Set<PosixFilePermission> permissions) {
         assertEquals(permissions, PosixFilePermissionSupport.fromMask(mask));
     }
 
     @ParameterizedTest(name = "mask: {0}, permissions: {1}")
     @MethodSource("testArguments")
-    public void testToMask(int mask, Set<PosixFilePermission> permissions) {
+    void testToMask(int mask, Set<PosixFilePermission> permissions) {
         // don't test toMask for 01000 or -1
         if (0 <= mask && mask <= 0777) {
             assertEquals(mask, PosixFilePermissionSupport.toMask(permissions));
@@ -570,7 +570,7 @@ public class PosixFilePermissionSupportTest {
 
     @ParameterizedTest(name = "mask: {0}, permissions: {1}")
     @MethodSource("testArguments")
-    public void testHasPermission(int mask, Set<PosixFilePermission> permissions) {
+    void testHasPermission(int mask, Set<PosixFilePermission> permissions) {
         for (PosixFilePermission permission : ALL_PERMISSIONS) {
             assertEquals(permissions.contains(permission), PosixFilePermissionSupport.hasPermission(mask, permission));
         }

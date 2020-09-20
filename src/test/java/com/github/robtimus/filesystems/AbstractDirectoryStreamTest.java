@@ -36,17 +36,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings({ "nls", "javadoc" })
-public class AbstractDirectoryStreamTest {
+class AbstractDirectoryStreamTest {
 
     private FileSystem fs;
 
     @BeforeEach
-    public void init() {
+    void init() {
         fs = mock(FileSystem.class);
     }
 
     @Test
-    public void testIterator() throws IOException {
+    void testIterator() throws IOException {
         final int count = 100;
 
         List<String> expected = new ArrayList<>();
@@ -55,7 +55,7 @@ public class AbstractDirectoryStreamTest {
         }
 
         List<String> names = new ArrayList<>();
-        try (DirectoryStream<Path> stream = new TestDirectoryStream(count, AcceptAllFilter.INSTANCE)) {
+        try (DirectoryStream<Path> stream = new TestDirectoryStream(count, entry -> true)) {
             for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext(); ) {
                 names.add(iterator.next().getFileName().toString());
             }
@@ -64,7 +64,7 @@ public class AbstractDirectoryStreamTest {
     }
 
     @Test
-    public void testFilteredIterator() throws IOException {
+    void testFilteredIterator() throws IOException {
         final int count = 100;
 
         List<String> expected = new ArrayList<>();
@@ -85,7 +85,7 @@ public class AbstractDirectoryStreamTest {
     }
 
     @Test
-    public void testCloseWhileIterating() throws IOException {
+    void testCloseWhileIterating() throws IOException {
         final int count = 100;
 
         List<String> expected = new ArrayList<>();
@@ -95,7 +95,7 @@ public class AbstractDirectoryStreamTest {
         expected = expected.subList(0, count / 2);
 
         List<String> names = new ArrayList<>();
-        try (DirectoryStream<Path> stream = new TestDirectoryStream(count, AcceptAllFilter.INSTANCE)) {
+        try (DirectoryStream<Path> stream = new TestDirectoryStream(count, entry -> true)) {
             int index = 0;
             for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext(); ) {
                 if (++index == count / 2) {
@@ -108,8 +108,8 @@ public class AbstractDirectoryStreamTest {
     }
 
     @Test
-    public void testIteratorAfterClose() throws IOException {
-        try (DirectoryStream<Path> stream = new TestDirectoryStream(0, AcceptAllFilter.INSTANCE)) {
+    void testIteratorAfterClose() throws IOException {
+        try (DirectoryStream<Path> stream = new TestDirectoryStream(0, entry -> true)) {
             stream.close();
             IllegalStateException exception = assertThrows(IllegalStateException.class, stream::iterator);
             assertEquals(Messages.directoryStream().closed().getMessage(), exception.getMessage());
@@ -117,8 +117,8 @@ public class AbstractDirectoryStreamTest {
     }
 
     @Test
-    public void testIteratorAfterIterator() throws IOException {
-        try (DirectoryStream<Path> stream = new TestDirectoryStream(0, AcceptAllFilter.INSTANCE)) {
+    void testIteratorAfterIterator() throws IOException {
+        try (DirectoryStream<Path> stream = new TestDirectoryStream(0, entry -> true)) {
             stream.iterator();
             IllegalStateException exception = assertThrows(IllegalStateException.class, stream::iterator);
             assertEquals(Messages.directoryStream().iteratorAlreadyReturned().getMessage(), exception.getMessage());
@@ -126,24 +126,17 @@ public class AbstractDirectoryStreamTest {
     }
 
     @Test
-    public void testThrowWhileIterating() throws IOException {
-        try (DirectoryStream<Path> stream = new TestDirectoryStream(100, ThrowingFilter.INSTANCE)) {
+    void testThrowWhileIterating() throws IOException {
+        Filter<Path> filter = entry -> {
+            throw new IOException();
+        };
+        try (DirectoryStream<Path> stream = new TestDirectoryStream(100, filter)) {
             DirectoryIteratorException exception = assertThrows(DirectoryIteratorException.class, () -> {
                 for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext(); ) {
                     iterator.next();
                 }
             });
             assertThat(exception.getCause(), instanceOf(IOException.class));
-        }
-    }
-
-    private static final class AcceptAllFilter implements Filter<Path> {
-
-        private static final AcceptAllFilter INSTANCE = new AcceptAllFilter();
-
-        @Override
-        public boolean accept(Path entry) {
-            return true;
         }
     }
 
@@ -158,16 +151,6 @@ public class AbstractDirectoryStreamTest {
         @Override
         public boolean accept(Path entry) {
             return pattern.matcher(entry.getFileName().toString()).matches();
-        }
-    }
-
-    private static final class ThrowingFilter implements Filter<Path> {
-
-        private static final ThrowingFilter INSTANCE = new ThrowingFilter();
-
-        @Override
-        public boolean accept(Path entry) throws IOException {
-            throw new IOException();
         }
     }
 

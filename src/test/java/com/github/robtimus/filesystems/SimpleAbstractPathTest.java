@@ -27,18 +27,18 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "nls", "javadoc" })
-public class SimpleAbstractPathTest {
+@SuppressWarnings("nls")
+class SimpleAbstractPathTest {
 
     private FileSystem fs;
 
     @BeforeEach
-    public void init() {
+    void init() {
         fs = mock(FileSystem.class);
     }
 
     @Test
-    public void testNormalization() {
+    void testNormalization() {
         testNormalization("/", "/");
         testNormalization("//", "/");
         testNormalization("///", "/");
@@ -71,7 +71,7 @@ public class SimpleAbstractPathTest {
     }
 
     @Test
-    public void testAbsolute() {
+    void testAbsolute() {
         testIsAbsolute("/", true);
         testIsAbsolute("/", true);
         testIsAbsolute("/foo", true);
@@ -87,7 +87,7 @@ public class SimpleAbstractPathTest {
     }
 
     @Test
-    public void testGetRoot() {
+    void testGetRoot() {
         testGetRoot("/", "/");
         testGetRoot("/foo", "/");
         testGetRoot("/foo/bar", "/");
@@ -106,7 +106,7 @@ public class SimpleAbstractPathTest {
     }
 
     @Test
-    public void testGetParent() {
+    void testGetParent() {
         testGetParent("/", null);
         testGetParent("/foo", "/");
         testGetParent("/foo/bar", "/foo");
@@ -125,7 +125,7 @@ public class SimpleAbstractPathTest {
     }
 
     @Test
-    public void testGetNameCount() {
+    void testGetNameCount() {
         testGetNameCount("/", 0);
         testGetNameCount("/foo", 1);
         testGetNameCount("/foo/bar", 2);
@@ -141,7 +141,7 @@ public class SimpleAbstractPathTest {
     }
 
     @Test
-    public void testSubpath() {
+    void testSubpath() {
         testInvalidSubpathIndexes("/", 0, 1);
 
         testSubpath("/foo", 0, 1, "foo");
@@ -171,7 +171,7 @@ public class SimpleAbstractPathTest {
     }
 
     @Test
-    public void testStartsWith() {
+    void testStartsWith() {
         testStartsWith("/", "/", true);
         testStartsWith("/", "", false);
         testStartsWith("/", "/foo", false);
@@ -215,7 +215,7 @@ public class SimpleAbstractPathTest {
     }
 
     @Test
-    public void testEndsWith() {
+    void testEndsWith() {
         assertFalse(Paths.get("fo").endsWith(Paths.get("")));
 
         testEndsWith("/", "/", true);
@@ -263,7 +263,7 @@ public class SimpleAbstractPathTest {
     }
 
     @Test
-    public void testNormalize() {
+    void testNormalize() {
         testNormalize("/", "/");
         testNormalize("/foo", "/foo");
         testNormalize("/foo/bar", "/foo/bar");
@@ -292,7 +292,7 @@ public class SimpleAbstractPathTest {
     }
 
     @Test
-    public void testResolve() {
+    void testResolve() {
         testResolve("/", "/", "/");
         testResolve("/", "/foo", "/foo");
         testResolve("/", "/..", "/..");
@@ -332,7 +332,7 @@ public class SimpleAbstractPathTest {
     }
 
     @Test
-    public void testRelativize() {
+    void testRelativize() {
         testRelativize("/", "/", "");
         testRelativize("/", "/foo", "foo");
 

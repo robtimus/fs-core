@@ -36,18 +36,18 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "nls", "javadoc" })
-public class AbstractPathTest {
+@SuppressWarnings("nls")
+class AbstractPathTest {
 
     private FileSystem fs;
 
     @BeforeEach
-    public void init() {
+    void init() {
         fs = mock(FileSystem.class);
     }
 
     @Test
-    public void testGetFileName() {
+    void testGetFileName() {
         testGetFileName("/", null);
         testGetFileName("/foo", "foo");
         testGetFileName("/foo/bar", "bar");
@@ -68,7 +68,7 @@ public class AbstractPathTest {
     }
 
     @Test
-    public void testGetName() {
+    void testGetName() {
         testGetName("/foo", 0, "foo");
 
         testGetName("/foo/bar", 0, "foo");
@@ -88,7 +88,7 @@ public class AbstractPathTest {
     }
 
     @Test
-    public void testResolveSibling() {
+    void testResolveSibling() {
         testResolveSibling("/", "foo", "foo");
         testResolveSibling("/foo", "bar", "/bar");
         testResolveSibling("/foo/bar", "baz", "/foo/baz");
@@ -104,7 +104,7 @@ public class AbstractPathTest {
     }
 
     @Test
-    public void testIterator() {
+    void testIterator() {
         testIterator("/");
         testIterator("/foo", "foo");
         testIterator("/foo/bar", "foo", "bar");

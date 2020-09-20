@@ -54,7 +54,7 @@ public final class Messages {
     private static final ResourceBundle BUNDLE = ResourceBundle.getBundle("com.github.robtimus.filesystems.fs", UTF8Control.INSTANCE); //$NON-NLS-1$
 
     private Messages() {
-        throw new Error("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
+        throw new IllegalStateException("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
     }
 
     private static synchronized String getMessage(String key) {
