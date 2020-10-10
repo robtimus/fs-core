@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "nls", "javadoc" })
+@SuppressWarnings("nls")
 class AbstractDirectoryStreamTest {
 
     private FileSystem fs;
