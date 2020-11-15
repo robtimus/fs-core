@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,10 +56,12 @@ class AbstractDirectoryStreamTest {
         }
 
         List<String> names = new ArrayList<>();
-        try (DirectoryStream<Path> stream = new TestDirectoryStream(count, entry -> true)) {
-            for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext(); ) {
+        try (DirectoryStream<Path> stream = new TestDirectoryStream(count, null)) {
+            Iterator<Path> iterator = stream.iterator();
+            while (iterator.hasNext()) {
                 names.add(iterator.next().getFileName().toString());
             }
+            assertThrows(NoSuchElementException.class, iterator::next);
         }
         assertEquals(expected, names);
     }

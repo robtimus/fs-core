@@ -283,7 +283,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Byte.parseByte(property);
+                return Byte.parseByte((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -312,7 +312,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Byte.parseByte(property);
+                return Byte.parseByte((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -340,7 +340,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Short.parseShort(property);
+                return Short.parseShort((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -369,7 +369,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Short.parseShort(property);
+                return Short.parseShort((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -397,7 +397,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Integer.parseInt(property);
+                return Integer.parseInt((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -426,7 +426,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Integer.parseInt(property);
+                return Integer.parseInt((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -454,7 +454,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Long.parseLong(property);
+                return Long.parseLong((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -483,7 +483,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Long.parseLong(property);
+                return Long.parseLong((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -511,7 +511,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Float.parseFloat(property);
+                return Float.parseFloat((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -540,7 +540,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Float.parseFloat(property);
+                return Float.parseFloat((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -568,7 +568,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Double.parseDouble(property);
+                return Double.parseDouble((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
@@ -597,7 +597,7 @@ public final class FileSystemProviderSupport {
         }
         if (value instanceof String) {
             try {
-                return Double.parseDouble(property);
+                return Double.parseDouble((String) value);
             } catch (@SuppressWarnings("unused") NumberFormatException e) {
                 throw Messages.fileSystemProvider().env().invalidProperty(property, value);
             }
