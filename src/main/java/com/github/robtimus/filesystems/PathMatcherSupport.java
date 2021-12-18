@@ -102,52 +102,52 @@ public final class PathMatcherSupport {
         while (i < glob.length()) {
             char c = glob.charAt(i++);
             switch (c) {
-            case '\\':
-                ensureGlobMetaChar(glob, i);
-                appendLiteral(glob.charAt(i++), regex);
-                break;
-            case '*':
-                if (isCharAt(glob, i, '*')) {
-                    // anything including separators
-                    regex.append(".*"); //$NON-NLS-1$
-                    i++;
-                } else {
+                case '\\':
+                    ensureGlobMetaChar(glob, i);
+                    appendLiteral(glob.charAt(i++), regex);
+                    break;
+                case '*':
+                    if (isCharAt(glob, i, '*')) {
+                        // anything including separators
+                        regex.append(".*"); //$NON-NLS-1$
+                        i++;
+                    } else {
+                        // anything but a separator
+                        regex.append("[^/]*"); //$NON-NLS-1$
+                    }
+                    break;
+                case '?':
                     // anything but a separator
-                    regex.append("[^/]*"); //$NON-NLS-1$
-                }
-                break;
-            case '?':
-                // anything but a separator
-                regex.append("[^/]"); //$NON-NLS-1$
-                break;
-            case '[':
-                // a class
-                i = appendClass(glob, i, regex);
-                break;
-            case ']':
-                throw Messages.pathMatcher().glob().unexpectedClassEnd(glob, i - 1);
-            case '{':
-                if (inGroup) {
-                    throw Messages.pathMatcher().glob().nestedGroupsNotSupported(glob, i - 1);
-                }
-                i = appendGroup(glob, i, regex);
-                break;
-            case '}':
-                if (!inGroup) {
-                    throw Messages.pathMatcher().glob().unexpectedGroupEnd(glob, i - 1);
-                }
-                // Return out of this method to appendGroup
-                return i;
-            case ',':
-                if (inGroup) {
-                    regex.append(")|(?:"); //$NON-NLS-1$
-                } else {
+                    regex.append("[^/]"); //$NON-NLS-1$
+                    break;
+                case '[':
+                    // a class
+                    i = appendClass(glob, i, regex);
+                    break;
+                case ']':
+                    throw Messages.pathMatcher().glob().unexpectedClassEnd(glob, i - 1);
+                case '{':
+                    if (inGroup) {
+                        throw Messages.pathMatcher().glob().nestedGroupsNotSupported(glob, i - 1);
+                    }
+                    i = appendGroup(glob, i, regex);
+                    break;
+                case '}':
+                    if (!inGroup) {
+                        throw Messages.pathMatcher().glob().unexpectedGroupEnd(glob, i - 1);
+                    }
+                    // Return out of this method to appendGroup
+                    return i;
+                case ',':
+                    if (inGroup) {
+                        regex.append(")|(?:"); //$NON-NLS-1$
+                    } else {
+                        appendLiteral(c, regex);
+                    }
+                    break;
+                default:
                     appendLiteral(c, regex);
-                }
-                break;
-            default:
-                appendLiteral(c, regex);
-                break;
+                    break;
             }
         }
         if (inGroup) {
@@ -177,20 +177,20 @@ public final class PathMatcherSupport {
         while (i < glob.length() && inClass) {
             char c = glob.charAt(i++);
             switch (c) {
-            case '\\':
-                ensureGlobMetaChar(glob, i);
-                appendLiteral(glob.charAt(i++), regex);
-                break;
-            case '/':
-                throw Messages.pathMatcher().glob().separatorNotAllowedInClass(glob, i - 1);
-            case '[':
-                throw Messages.pathMatcher().glob().nestedClassesNotSupported(glob, i - 1);
-            case ']':
-                inClass = false;
-                break;
-            default:
-                appendLiteral(c, regex);
-                break;
+                case '\\':
+                    ensureGlobMetaChar(glob, i);
+                    appendLiteral(glob.charAt(i++), regex);
+                    break;
+                case '/':
+                    throw Messages.pathMatcher().glob().separatorNotAllowedInClass(glob, i - 1);
+                case '[':
+                    throw Messages.pathMatcher().glob().nestedClassesNotSupported(glob, i - 1);
+                case ']':
+                    inClass = false;
+                    break;
+                default:
+                    appendLiteral(c, regex);
+                    break;
             }
         }
         if (inClass) {

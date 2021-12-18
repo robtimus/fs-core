@@ -115,27 +115,27 @@ public final class PosixFilePermissionSupport {
      */
     public static boolean hasPermission(int mask, PosixFilePermission permission) {
         switch (permission) {
-        case OWNER_READ:
-            return isSet(mask, S_IRUSR);
-        case OWNER_WRITE:
-            return isSet(mask, S_IWUSR);
-        case OWNER_EXECUTE:
-            return isSet(mask, S_IXUSR);
-        case GROUP_READ:
-            return isSet(mask, S_IRGRP);
-        case GROUP_WRITE:
-            return isSet(mask, S_IWGRP);
-        case GROUP_EXECUTE:
-            return isSet(mask, S_IXGRP);
-        case OTHERS_READ:
-            return isSet(mask, S_IROTH);
-        case OTHERS_WRITE:
-            return isSet(mask, S_IWOTH);
-        case OTHERS_EXECUTE:
-            return isSet(mask, S_IXOTH);
-        default:
-            // should not occur
-            return false;
+            case OWNER_READ:
+                return isSet(mask, S_IRUSR);
+            case OWNER_WRITE:
+                return isSet(mask, S_IWUSR);
+            case OWNER_EXECUTE:
+                return isSet(mask, S_IXUSR);
+            case GROUP_READ:
+                return isSet(mask, S_IRGRP);
+            case GROUP_WRITE:
+                return isSet(mask, S_IWGRP);
+            case GROUP_EXECUTE:
+                return isSet(mask, S_IXGRP);
+            case OTHERS_READ:
+                return isSet(mask, S_IROTH);
+            case OTHERS_WRITE:
+                return isSet(mask, S_IWOTH);
+            case OTHERS_EXECUTE:
+                return isSet(mask, S_IXOTH);
+            default:
+                // should not occur
+                return false;
         }
     }
 
