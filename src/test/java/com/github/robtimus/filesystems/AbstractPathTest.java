@@ -20,16 +20,9 @@ package com.github.robtimus.filesystems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
-import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.WatchEvent.Kind;
-import java.nio.file.WatchEvent.Modifier;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,10 +53,10 @@ class AbstractPathTest {
     private void testGetFileName(String path, String expected) {
         if (expected == null) {
             assertNull(Paths.get(path).getFileName());
-            assertNull(new TestPath(path).getFileName());
+            assertNull(new TestPath(path, fs).getFileName());
         } else {
             assertEquals(expected, Paths.get(path).getFileName().toString());
-            assertEquals(expected, new TestPath(path).getFileName().toString());
+            assertEquals(expected, new TestPath(path, fs).getFileName().toString());
         }
     }
 
@@ -84,7 +77,7 @@ class AbstractPathTest {
 
     private void testGetName(String path, int index, String expected) {
         assertEquals(expected, Paths.get(path).getName(index).toString());
-        assertEquals(expected, new TestPath(path).getName(index).toString());
+        assertEquals(expected, new TestPath(path, fs).getName(index).toString());
     }
 
     @Test
@@ -100,7 +93,7 @@ class AbstractPathTest {
 
     private void testResolveSibling(String path, String other, String expected) {
         assertEquals(expected, Paths.get(path).resolveSibling(Paths.get(other)).toString().replace('\\', '/'));
-        assertEquals(expected, new TestPath(path).resolveSibling(new TestPath(other)).toString());
+        assertEquals(expected, new TestPath(path, fs).resolveSibling(new TestPath(other, fs)).toString());
     }
 
     @Test
@@ -119,7 +112,7 @@ class AbstractPathTest {
     private void testIterator(String path, String... parts) {
         List<String> expected = Arrays.asList(parts);
         assertEquals(expected, toNameList(Paths.get(path)));
-        assertEquals(expected, toNameList(new TestPath(path)));
+        assertEquals(expected, toNameList(new TestPath(path, fs)));
     }
 
     private List<String> toNameList(Path path) {
@@ -128,42 +121,5 @@ class AbstractPathTest {
             list.add(name.toString());
         }
         return list;
-    }
-
-    private final class TestPath extends SimpleAbstractPath {
-
-        private TestPath(String path) {
-            super(path);
-        }
-
-        @Override
-        protected SimpleAbstractPath createPath(String path) {
-            return new TestPath(path);
-        }
-
-        @Override
-        public FileSystem getFileSystem() {
-            return fs;
-        }
-
-        @Override
-        public URI toUri() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Path toAbsolutePath() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Path toRealPath(LinkOption... options) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public WatchKey register(WatchService watcher, Kind<?>[] events, Modifier... modifiers) throws IOException {
-            throw new UnsupportedOperationException();
-        }
     }
 }

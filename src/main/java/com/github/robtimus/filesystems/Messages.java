@@ -51,10 +51,20 @@ import java.util.regex.PatternSyntaxException;
  */
 public final class Messages {
 
-    private static final ResourceBundle BUNDLE = ResourceBundle.getBundle("com.github.robtimus.filesystems.fs", UTF8Control.INSTANCE); //$NON-NLS-1$
+    private static final ResourceBundle BUNDLE = getBundle();
 
     private Messages() {
         throw new IllegalStateException("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
+    }
+
+    private static ResourceBundle getBundle() {
+        final String baseName = "com.github.robtimus.filesystems.fs"; //$NON-NLS-1$
+        try {
+            return ResourceBundle.getBundle(baseName, UTF8Control.INSTANCE);
+        } catch (@SuppressWarnings("unused") UnsupportedOperationException e) {
+            // Java 9 or up; defaults to UTF-8
+            return ResourceBundle.getBundle(baseName);
+        }
     }
 
     private static synchronized String getMessage(String key) {

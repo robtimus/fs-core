@@ -80,9 +80,11 @@ class AbstractDirectoryStreamTest {
         List<String> names = new ArrayList<>();
         Filter<Path> filter = new PatternFilter("file\\d*[13579]");
         try (DirectoryStream<Path> stream = new TestDirectoryStream(count, filter)) {
-            for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext(); ) {
+            Iterator<Path> iterator = stream.iterator();
+            while (iterator.hasNext()) {
                 names.add(iterator.next().getFileName().toString());
             }
+            assertThrows(NoSuchElementException.class, iterator::next);
         }
         assertEquals(expected, names);
     }
