@@ -202,10 +202,12 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system being added")
         void testFileSystemBeingAdded() {
+            CountDownLatch createStarted = new CountDownLatch(1);
             CountDownLatch createEnd = new CountDownLatch(1);
 
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                createStarted.countDown();
                 await(createEnd);
                 return fileSystem;
             });
@@ -214,6 +216,9 @@ class FileSystemMapTest {
             Map<String, ?> env = Collections.emptyMap();
 
             executor.submit(() -> map.add(uri, env));
+
+            assertTrue(assertDoesNotThrow(() -> createStarted.await(100, TimeUnit.MILLISECONDS)));
+
             executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
 
             @SuppressWarnings("resource")
@@ -298,10 +303,12 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system being added")
         void testFileSystemBeingAdded() {
+            CountDownLatch createStarted = new CountDownLatch(1);
             CountDownLatch createEnd = new CountDownLatch(1);
 
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                createStarted.countDown();
                 await(createEnd);
                 return fileSystem;
             });
@@ -310,6 +317,9 @@ class FileSystemMapTest {
             Map<String, ?> env = Collections.emptyMap();
 
             executor.submit(() -> map.add(uri, env));
+
+            assertTrue(assertDoesNotThrow(() -> createStarted.await(100, TimeUnit.MILLISECONDS)));
+
             executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
 
             assertTrue(map.remove(uri));
@@ -380,10 +390,12 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system being added")
         void testFileSystemBeingAdded() {
+            CountDownLatch createStarted = new CountDownLatch(1);
             CountDownLatch createEnd = new CountDownLatch(1);
 
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                createStarted.countDown();
                 await(createEnd);
                 return fileSystem;
             });
@@ -392,6 +404,9 @@ class FileSystemMapTest {
             Map<String, ?> env = Collections.emptyMap();
 
             executor.submit(() -> map.add(uri, env));
+
+            assertTrue(assertDoesNotThrow(() -> createStarted.await(100, TimeUnit.MILLISECONDS)));
+
             executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
 
             assertEquals(Collections.singleton(uri), map.uris());
