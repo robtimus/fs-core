@@ -88,10 +88,11 @@ public final class FileSystemMap<S extends FileSystem> {
         Objects.requireNonNull(uri);
         Objects.requireNonNull(env);
 
-        Lock lock = addLock(uri);
-
+        ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+        Lock lock = readWriteLock.writeLock();
         lock.lock();
         try {
+            addLock(uri, readWriteLock.readLock());
             S fileSystem = createFileSystem(uri, env);
             addNewFileSystem(uri, fileSystem);
             return fileSystem;
@@ -100,14 +101,12 @@ public final class FileSystemMap<S extends FileSystem> {
         }
     }
 
-    private Lock addLock(URI uri) {
+    private void addLock(URI uri, Lock lock) {
         synchronized (fileSystems) {
             if (fileSystems.containsKey(uri) || locks.containsKey(uri)) {
                 throw new FileSystemAlreadyExistsException(uri.toString());
             }
-            ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-            locks.put(uri, readWriteLock.readLock());
-            return readWriteLock.writeLock();
+            locks.put(uri, lock);
         }
     }
 
