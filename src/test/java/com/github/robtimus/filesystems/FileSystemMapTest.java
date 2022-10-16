@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -342,12 +343,14 @@ class FileSystemMapTest {
             Map<String, ?> env = Collections.emptyMap();
 
             executor.submit(() -> map.add(uri, env));
-            executor.submit(() -> map.remove(uri));
+            Future<Boolean> removed1 = executor.submit(() -> map.remove(uri));
+            Future<Boolean> removed2 = executor.submit(() -> map.remove(uri));
             executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
-            // Call map.remove(uri) through the executor, so the chances of race conditions with map.remove(uri) will become smaller
-            Future<Boolean> removed = executor.submit(() -> map.remove(uri));
 
-            assertFalse(assertDoesNotThrow(() -> removed.get()));
+            // Due to timing, it's not guaranteed which remove call finished first, but only one can return true
+            assertNotEquals(assertDoesNotThrow(() -> removed1.get()), assertDoesNotThrow(() -> removed2.get()));
+
+            assertNotAdded(map, uri);
         }
 
         private void assertNotAdded(FileSystemMap<?> map, URI uri) {
