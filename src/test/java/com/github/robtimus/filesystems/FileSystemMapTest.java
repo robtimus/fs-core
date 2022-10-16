@@ -18,6 +18,7 @@
 package com.github.robtimus.filesystems;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -268,7 +269,7 @@ class FileSystemMapTest {
 
             URI uri = URI.create("urn:test");
 
-            assertDoesNotThrow(() -> map.remove(uri));
+            assertFalse(map.remove(uri));
 
             assertNotAdded(map, uri);
         }
@@ -288,7 +289,7 @@ class FileSystemMapTest {
 
             assertSame(fileSystem, added);
 
-            assertDoesNotThrow(() -> map.remove(uri));
+            assertTrue(map.remove(uri));
 
             assertNotAdded(map, uri);
         }
@@ -310,9 +311,32 @@ class FileSystemMapTest {
             executor.submit(() -> map.add(uri, env));
             executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
 
-            assertDoesNotThrow(() -> map.remove(uri));
+            assertTrue(map.remove(uri));
 
             assertNotAdded(map, uri);
+        }
+
+        @Test
+        @DisplayName("file system removed")
+        void testFileSystemRemoved() {
+            CountDownLatch createEnd = new CountDownLatch(1);
+
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                await(createEnd);
+                return fileSystem;
+            });
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            executor.submit(() -> map.add(uri, env));
+            executor.submit(() -> map.remove(uri));
+            executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
+            // Call map.remove(uri) through the executor, so the chances of race conditions with map.remove(uri) will become smaller
+            Future<Boolean> removed = executor.submit(() -> map.remove(uri));
+
+            assertFalse(assertDoesNotThrow(() -> removed.get()));
         }
 
         private void assertNotAdded(FileSystemMap<?> map, URI uri) {

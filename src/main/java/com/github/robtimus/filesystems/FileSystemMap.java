@@ -45,21 +45,24 @@ public final class FileSystemMap<S extends FileSystem> {
     private final FileSystemFactory<? extends S> factory;
 
     /*
-     * When a file system has been added, it is present in fileSystems.
-     * However, while the file system is still being created, it is present in locks instead.
+     * When a file system has been added, it is present in fileSystems as a FileSystemRegistration.
+     * Such a FileSystemRegistration comes in two states:
+     * - initially its file system is still being created, and it therefore only has a lock
+     * - after the file system has been created, the lock is exchanged for the created file system
+     *
      * This allows the creation of file systems to be moved outside of global locking, and only use locking for the file system itself.
      *
      * The locks will be read locks, linked to a write lock that will be acquired for the duration of invocations to add. That means that once such a
      * lock is successfully acquired, the write lock has been released and the file system will have been created.
      *
      * Locking strategy:
-     * - The fileSystems and locks maps are both guarded by the fileSystems map
+     * - The fileSystems map is both guarded by the fileSystems map itself
      * - synchronized blocks are used inside locks, but within synchronized blocks no locks are used
      * - synchronized blocks contain only short-lived and non-blocking logic
+     * - all access to FileSystemRegistration instances is done from within synchronized blocks
      */
 
-    private final Map<URI, S> fileSystems;
-    private final Map<URI, Lock> locks;
+    private final Map<URI, FileSystemRegistration<S>> fileSystems;
 
     /**
      * Creates a new {@link FileSystem} map.
@@ -70,7 +73,6 @@ public final class FileSystemMap<S extends FileSystem> {
         this.factory = Objects.requireNonNull(factory);
 
         fileSystems = new HashMap<>();
-        locks = new HashMap<>();
     }
 
     /**
@@ -103,10 +105,10 @@ public final class FileSystemMap<S extends FileSystem> {
 
     private void addLock(URI uri, Lock lock) {
         synchronized (fileSystems) {
-            if (fileSystems.containsKey(uri) || locks.containsKey(uri)) {
+            if (fileSystems.containsKey(uri)) {
                 throw new FileSystemAlreadyExistsException(uri.toString());
             }
-            locks.put(uri, lock);
+            fileSystems.put(uri, new FileSystemRegistration<>(lock));
         }
     }
 
@@ -114,23 +116,22 @@ public final class FileSystemMap<S extends FileSystem> {
         try {
             return factory.create(uri, env);
         } catch (final Exception e) {
-            // A lock has been added as part of addLock; remove it again so add can be called again
+            // A lock has been added as part of addLock; remove it again so add can be called again with the same URI.
             removeLock(uri);
             throw e;
         }
     }
 
-    @SuppressWarnings("resource")
     private void addNewFileSystem(URI uri, S fileSystem) {
         synchronized (fileSystems) {
-            fileSystems.put(uri, fileSystem);
-            locks.remove(uri);
+            // This method is called while the write lock is acquired, so nothing can have removed the entry yet.
+            fileSystems.get(uri).setFileSystem(fileSystem);
         }
     }
 
     private void removeLock(URI uri) {
         synchronized (fileSystems) {
-            locks.remove(uri);
+            fileSystems.remove(uri);
         }
     }
 
@@ -146,23 +147,22 @@ public final class FileSystemMap<S extends FileSystem> {
     public S get(URI uri) {
         Objects.requireNonNull(uri);
 
-        S fileSystem;
         Lock lock;
 
         synchronized (fileSystems) {
-            fileSystem = fileSystems.get(uri);
-            if (fileSystem != null) {
-                return fileSystem;
-            }
-            lock = locks.get(uri);
-            if (lock == null) {
+            FileSystemRegistration<S> registration = fileSystems.get(uri);
+            if (registration == null) {
                 throw new FileSystemNotFoundException(uri.toString());
             }
+            if (registration.fileSystem != null) {
+                return registration.fileSystem;
+            }
+            // There is a registration but without a file system, so the write lock is still acquired.
+            lock = registration.lock;
         }
 
         lock.lock();
         try {
-            // add has finished, so locks.get(uri) will be null
             return getFileSystem(uri);
         } finally {
             lock.unlock();
@@ -171,12 +171,15 @@ public final class FileSystemMap<S extends FileSystem> {
 
     private S getFileSystem(URI uri) {
         synchronized (fileSystems) {
-            S fileSystem = fileSystems.get(uri);
-            // Add another null check, in case remove has been called and "wins" over this call
-            if (fileSystem == null) {
+            /*
+             * The write lock has been released, so fileSystems.get(uri) either is null or has a file system.
+             * It will only be null in case the file system has been removed between getting a reference to the read lock and acquiring it.
+             */
+            FileSystemRegistration<S> registration = fileSystems.get(uri);
+            if (registration == null) {
                 throw new FileSystemNotFoundException(uri.toString());
             }
-            return fileSystem;
+            return registration.fileSystem;
         }
     }
 
@@ -186,39 +189,52 @@ public final class FileSystemMap<S extends FileSystem> {
      * If no file system had been added for the given URI, or if it already had been removed, no error will be thrown.
      *
      * @param uri The URI representing the file system.
+     * @return {@code true} if a file system was added for the given URI, or {@code false} otherwise.
      * @throws NullPointerException If the given URI is {@code null}.
      * @see FileSystem#close()
      */
-    public void remove(URI uri) {
+    public boolean remove(URI uri) {
         Objects.requireNonNull(uri);
 
-        Lock lock = removeFileSystemOrGetLock(uri);
+        Lock lock;
 
-        if (lock != null) {
-            lock.lock();
-            try {
-                // add has finished, so locks.get(uri) will be null
-                removeFileSystem(uri);
-            } finally {
-                lock.unlock();
+        synchronized (fileSystems) {
+            /*
+             * If the URI is mapped to a registration with a file system, that mapping must be removed.
+             * If the URI is mapped to a registration with a lock, that mapping must not be removed at this point, as the lock is still needed.
+             * Instead, it must be removed after the lock can be acquired.
+             *
+             * Because it's more likely to remove file systems *after* they have been completely added, remove the registration and re-add it
+             * if it has a lock instead of a file system.
+             */
+            FileSystemRegistration<S> registration = fileSystems.remove(uri);
+            if (registration == null) {
+                return false;
             }
+            if (registration.fileSystem != null) {
+                return true;
+            }
+            // There is a registration but without a file system, so the write lock is still acquired.
+            fileSystems.put(uri, registration);
+            lock = registration.lock;
+        }
+
+        lock.lock();
+        try {
+            // add has finished, so fileSystem.get(uri) will be null or have a file system
+            return removeFileSystem(uri);
+        } finally {
+            lock.unlock();
         }
     }
 
-    @SuppressWarnings("resource")
-    private Lock removeFileSystemOrGetLock(URI uri) {
+    private boolean removeFileSystem(URI uri) {
         synchronized (fileSystems) {
-            if (fileSystems.remove(uri) != null) {
-                return null;
-            }
-            return locks.get(uri);
-        }
-    }
-
-    @SuppressWarnings("resource")
-    private void removeFileSystem(URI uri) {
-        synchronized (fileSystems) {
-            fileSystems.remove(uri);
+            /*
+             * The write lock has been released, so the registration can be removed.
+             * It's possible that another concurrent removal is finalized before this call.
+             */
+            return fileSystems.remove(uri) != null;
         }
     }
 
@@ -241,5 +257,21 @@ public final class FileSystemMap<S extends FileSystem> {
          * @see FileSystemMap#add(URI, Map)
          */
         S create(URI uri, Map<String, ?> env) throws IOException;
+    }
+
+    private static final class FileSystemRegistration<S extends FileSystem> {
+
+        private S fileSystem;
+        private Lock lock;
+
+        private FileSystemRegistration(Lock lock) {
+            this.fileSystem = null;
+            this.lock = lock;
+        }
+
+        private void setFileSystem(S fileSystem) {
+            this.fileSystem = fileSystem;
+            this.lock = null;
+        }
     }
 }
