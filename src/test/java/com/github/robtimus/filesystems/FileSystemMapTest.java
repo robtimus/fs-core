@@ -18,6 +18,7 @@
 package com.github.robtimus.filesystems;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -341,6 +342,59 @@ class FileSystemMapTest {
 
         private void assertNotAdded(FileSystemMap<?> map, URI uri) {
             assertThrows(FileSystemNotFoundException.class, () -> map.get(uri));
+        }
+    }
+
+    @Nested
+    @DisplayName("uris")
+    class URIs {
+
+        @Test
+        @DisplayName("no file system added")
+        void testNoFileSystemAdded() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            assertEquals(Collections.emptySet(), map.uris());
+        }
+
+        @Test
+        @DisplayName("file system already added")
+        void testFileSystemAlreadyAdded() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            @SuppressWarnings("resource")
+            FileSystem added = assertDoesNotThrow(() -> map.add(uri, env));
+
+            assertSame(fileSystem, added);
+
+            assertEquals(Collections.singleton(uri), map.uris());
+        }
+
+        @Test
+        @DisplayName("file system being added")
+        void testFileSystemBeingAdded() {
+            CountDownLatch createEnd = new CountDownLatch(1);
+
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                await(createEnd);
+                return fileSystem;
+            });
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            executor.submit(() -> map.add(uri, env));
+            executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
+
+            assertEquals(Collections.singleton(uri), map.uris());
         }
     }
 

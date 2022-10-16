@@ -25,7 +25,9 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Objects;
+import java.util.TreeSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -35,6 +37,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * This class provides a thread-safe way to add, retrieve and remove file systems without any unnecessary locking during the actual creation of file
  * systems, which may take a while. It does so by maintaining a lock per URI; calling {@link #get(URI)} or {@link #remove(URI)} while a file system
  * is still being created will block until the creation is done (or has failed). However, any call with a different URI will not block.
+ * <p>
+ * The {@link #add(URI, Map)}, {@link #get(URI)} and {@link #remove(URI)} methods all require the same URI to be used. While that is often
+ * automatically the case for adding and removing file systems from {@link FileSystemProvider#newFileSystem(URI, Map)} and {@link FileSystem#close()}
+ * respectively, and usually also for retrieving file systems from {@link FileSystemProvider#getFileSystem(URI)},
+ * {@link FileSystemProvider#getPath(URI)} often needs some conversion or normalization, as it allows sub paths. This class does not enforce any
+ * conversion or normalization; however, it does provide access to the currently registered URIs through {@link #uris()}. That returns a
+ * {@link NavigableSet}, which allows a closest match to be easily found for a URI.
  *
  * @author Rob Spoor
  * @param <S> The type of file system to maintain.
@@ -235,6 +244,20 @@ public final class FileSystemMap<S extends FileSystem> {
              * It's possible that another concurrent removal is finalized before this call.
              */
             return fileSystems.remove(uri) != null;
+        }
+    }
+
+    /**
+     * Returns the URIs of the currently added file systems. The result is a snapshot of the current state; it will not be updated if a file system
+     * is added or removed.
+     * <p>
+     * Note that the URIs of file systems that are still being created as part of {@link #add(URI, Map)} will be included in the result.
+     *
+     * @return A set with the URIs of the currently added file systems.
+     */
+    public NavigableSet<URI> uris() {
+        synchronized (fileSystems) {
+            return new TreeSet<>(fileSystems.keySet());
         }
     }
 
