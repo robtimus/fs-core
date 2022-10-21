@@ -266,6 +266,7 @@ public final class FileSystemMap<S extends FileSystem> {
      *
      * @author Rob Spoor
      * @param <S> The type of file system to create.
+     * @since 2.1
      */
     public interface FileSystemFactory<S extends FileSystem> {
 
