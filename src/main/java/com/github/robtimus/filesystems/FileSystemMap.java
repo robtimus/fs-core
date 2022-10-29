@@ -36,7 +36,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * A map for file systems that can be used by {@link FileSystemProvider} implementations.
  * This class provides a thread-safe way to add, retrieve and remove file systems without any unnecessary locking during the actual creation of file
  * systems, which may take a while. It does so by maintaining a lock per URI; calling {@link #get(URI)} or {@link #remove(URI)} while a file system
- * is still being created will block until the creation is done (or has failed). However, any call with a different URI will not block.
+ * is still being created will block until the creation is done (or has failed). However, any call with a different URI will not block until the file
+ * system is created.
  * <p>
  * The {@link #add(URI, Map)}, {@link #get(URI)} and {@link #remove(URI)} methods all require the same URI to be used. While that is often
  * automatically the case for adding and removing file systems from {@link FileSystemProvider#newFileSystem(URI, Map)} and {@link FileSystem#close()}
