@@ -2,7 +2,7 @@
 
 The `fs-core` library provides utility classes and interfaces that can assist in implementing NIO.2 file systems.
 
-Please refer to the [JavaDocs](https://robtimus.github.io/fs-core/apidocs/index.html) for more information.
+Please refer to the [Javadoc](https://robtimus.github.io/fs-core/apidocs/index.html) for more information.
 
 ## Limitations
 
