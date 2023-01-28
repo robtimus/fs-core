@@ -1,4 +1,9 @@
 # fs-core
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.robtimus/fs-core)](https://search.maven.org/artifact/com.github.robtimus/fs-core)
+[![Build Status](https://github.com/robtimus/fs-core/actions/workflows/build.yml/badge.svg)](https://github.com/robtimus/fs-core/actions/workflows/build.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=com.github.robtimus%3Afs-core&metric=alert_status)](https://sonarcloud.io/summary/overall?id=com.github.robtimus%3Afs-core)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=com.github.robtimus%3Afs-core&metric=coverage)](https://sonarcloud.io/summary/overall?id=com.github.robtimus%3Afs-core)
+[![Known Vulnerabilities](https://snyk.io/test/github/robtimus/fs-core/badge.svg)](https://snyk.io/test/github/robtimus/fs-core)
 
 The `fs-core` library provides utility classes and interfaces that can assist in implementing NIO.2 file systems.
 
