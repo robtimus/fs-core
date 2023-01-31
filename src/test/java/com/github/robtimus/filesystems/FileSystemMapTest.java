@@ -244,9 +244,9 @@ class FileSystemMapTest {
 
             executor.submit(() -> map.add(uri, env));
             executor.submit(() -> map.remove(uri));
-            executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
-            // Call map.get(uri) through the executor, so the chances of race conditions with map.remove(uri) will become smaller
-            Future<FileSystem> retrieved = executor.submit(() -> map.get(uri));
+            executor.schedule(createEnd::countDown, 500, TimeUnit.MILLISECONDS);
+            // Let map.get(uri) be called after map.remove(uri) but before the creation of the file system completes
+            Future<FileSystem> retrieved = executor.schedule(() -> map.get(uri), 50, TimeUnit.MILLISECONDS);
 
             ExecutionException exception = assertThrows(ExecutionException.class, retrieved::get);
             assertInstanceOf(FileSystemNotFoundException.class, exception.getCause());
