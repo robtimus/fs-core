@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import java.nio.file.FileSystem;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -167,7 +168,8 @@ class SimpleAbstractPathTest {
     }
 
     private void testInvalidSubpathIndexes(String path, int beginIndex, int endIndex) {
-        assertThrows(IllegalArgumentException.class, () -> new TestPath(path, fs).subpath(beginIndex, endIndex));
+        Path pathObject = new TestPath(path, fs);
+        assertThrows(IllegalArgumentException.class, () -> pathObject.subpath(beginIndex, endIndex));
     }
 
     @Test
@@ -362,6 +364,8 @@ class SimpleAbstractPathTest {
     }
 
     private void testRelativizeAbsoluteMismatch(String path, String other) {
-        assertThrows(IllegalArgumentException.class, () -> new TestPath(path, fs).relativize(new TestPath(other, fs)));
+        Path pathObject = new TestPath(path, fs);
+        Path otherPath = new TestPath(other, fs);
+        assertThrows(IllegalArgumentException.class, () -> pathObject.relativize(otherPath));
     }
 }

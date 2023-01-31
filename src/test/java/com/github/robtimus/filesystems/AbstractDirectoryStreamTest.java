@@ -136,11 +136,9 @@ class AbstractDirectoryStreamTest {
             throw new IOException();
         };
         try (DirectoryStream<Path> stream = new TestDirectoryStream(100, filter)) {
-            DirectoryIteratorException exception = assertThrows(DirectoryIteratorException.class, () -> {
-                for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext(); ) {
-                    iterator.next();
-                }
-            });
+            Iterator<Path> iterator = stream.iterator();
+            // hasNext already uses the filter, and therefore already causes the exception to be thrown
+            DirectoryIteratorException exception = assertThrows(DirectoryIteratorException.class, iterator::hasNext);
             assertThat(exception.getCause(), instanceOf(IOException.class));
         }
     }

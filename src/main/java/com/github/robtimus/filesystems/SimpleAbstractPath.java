@@ -330,17 +330,7 @@ public abstract class SimpleAbstractPath extends AbstractPath {
                 nonParentCount++;
             }
         }
-        StringBuilder sb = new StringBuilder(path.length());
-        if (isAbsolute()) {
-            sb.append('/');
-        }
-        for (Iterator<String> i = nameElements.iterator(); i.hasNext(); ) {
-            sb.append(i.next());
-            if (i.hasNext()) {
-                sb.append('/');
-            }
-        }
-        return createPath(sb.toString());
+        return createPath(nameElements);
     }
 
     private boolean equalsNameAt(String name, int index) {
@@ -352,6 +342,20 @@ public abstract class SimpleAbstractPath extends AbstractPath {
             return false;
         }
         return path.regionMatches(thisBegin, name, 0, thisLength);
+    }
+
+    private Path createPath(Iterable<String> nameElements) {
+        StringBuilder sb = new StringBuilder(path.length());
+        if (isAbsolute()) {
+            sb.append('/');
+        }
+        for (Iterator<String> i = nameElements.iterator(); i.hasNext(); ) {
+            sb.append(i.next());
+            if (i.hasNext()) {
+                sb.append('/');
+            }
+        }
+        return createPath(sb.toString());
     }
 
     /**

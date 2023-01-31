@@ -45,7 +45,7 @@ public abstract class AbstractDirectoryStream<T> implements DirectoryStream<T> {
      *
      * @param filter The optional filter to use.
      */
-    public AbstractDirectoryStream(DirectoryStream.Filter<? super T> filter) {
+    protected AbstractDirectoryStream(DirectoryStream.Filter<? super T> filter) {
         this.filter = filter;
     }
 
