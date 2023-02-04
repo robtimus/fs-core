@@ -54,7 +54,6 @@ public final class Messages {
     private static final ResourceBundle BUNDLE = getBundle();
 
     private Messages() {
-        throw new IllegalStateException("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
     }
 
     private static ResourceBundle getBundle() {
@@ -128,7 +127,6 @@ public final class Messages {
         private static final PathMessages INSTANCE = new PathMessages();
 
         private PathMessages() {
-            super();
         }
 
         /**
@@ -170,7 +168,6 @@ public final class Messages {
         private static final PathMatcherMessages INSTANCE = new PathMatcherMessages();
 
         private PathMatcherMessages() {
-            super();
         }
 
         /**
@@ -214,7 +211,6 @@ public final class Messages {
         private static final PathMatcherGlobMessages INSTANCE = new PathMatcherGlobMessages();
 
         private PathMatcherGlobMessages() {
-            super();
         }
 
         /**
@@ -324,7 +320,6 @@ public final class Messages {
         private static final FileStoreMessages INSTANCE = new FileStoreMessages();
 
         private FileStoreMessages() {
-            super();
         }
 
         /**
@@ -357,7 +352,6 @@ public final class Messages {
         private static final FileSystemProviderMessages INSTANCE = new FileSystemProviderMessages();
 
         private FileSystemProviderMessages() {
-            super();
         }
 
         /**
@@ -501,7 +495,6 @@ public final class Messages {
         private static final FileSystemProviderEnvMessages INSTANCE = new FileSystemProviderEnvMessages();
 
         private FileSystemProviderEnvMessages() {
-            super();
         }
 
         /**
@@ -558,7 +551,6 @@ public final class Messages {
         private static final DirectoryStreamMessages INSTANCE = new DirectoryStreamMessages();
 
         private DirectoryStreamMessages() {
-            super();
         }
 
         /**
@@ -599,7 +591,6 @@ public final class Messages {
         private static final FileChannelMessages INSTANCE = new FileChannelMessages();
 
         private FileChannelMessages() {
-            super();
         }
 
         /**
@@ -645,7 +636,6 @@ public final class Messages {
         private static final ByteChannelMessages INSTANCE = new ByteChannelMessages();
 
         private ByteChannelMessages() {
-            super();
         }
 
         /**
@@ -688,7 +678,6 @@ public final class Messages {
         private static final URIMessages INSTANCE = new URIMessages();
 
         private URIMessages() {
-            super();
         }
 
         /**
