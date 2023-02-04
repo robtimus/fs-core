@@ -89,11 +89,6 @@ public abstract class AbstractDirectoryStream<T> implements DirectoryStream<T> {
                 state = State.UNSPECIFIED;
                 return result;
             }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
         };
         setupIteration();
         return iterator;
