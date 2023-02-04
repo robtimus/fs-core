@@ -41,7 +41,6 @@ import java.util.Objects;
 public final class FileSystemProviderSupport {
 
     private FileSystemProviderSupport() {
-        throw new IllegalStateException("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
     }
 
     /**

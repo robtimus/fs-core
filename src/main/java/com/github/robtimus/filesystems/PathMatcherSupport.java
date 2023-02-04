@@ -30,7 +30,6 @@ import java.util.regex.PatternSyntaxException;
 public final class PathMatcherSupport {
 
     private PathMatcherSupport() {
-        throw new IllegalStateException("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
     }
 
     /**

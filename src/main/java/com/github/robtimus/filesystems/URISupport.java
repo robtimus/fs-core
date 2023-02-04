@@ -28,7 +28,6 @@ import java.net.URISyntaxException;
 public final class URISupport {
 
     private URISupport() {
-        throw new IllegalStateException("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
     }
 
     /**
