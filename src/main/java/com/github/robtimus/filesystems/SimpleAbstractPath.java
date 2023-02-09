@@ -35,11 +35,40 @@ import java.util.Objects;
  */
 public abstract class SimpleAbstractPath extends AbstractPath {
 
-    private static final String ROOT_PATH = "/"; //$NON-NLS-1$
-    private static final String EMPTY_PATH = ""; //$NON-NLS-1$
+    /**
+     * The file separator.
+     *
+     * @since 2.2
+     */
+    @SuppressWarnings("nls")
+    public static final String SEPARATOR = "/";
 
-    private static final String CURRENT_DIR = "."; //$NON-NLS-1$
-    private static final String PARENT_DIR = ".."; //$NON-NLS-1$
+    /**
+     * The root path.
+     *
+     * @since 2.2
+     */
+    @SuppressWarnings("nls")
+    public static final String ROOT_PATH = "/";
+
+    @SuppressWarnings("nls")
+    private static final String EMPTY_PATH = "";
+
+    /**
+     * The relative path to the current directory.
+     *
+     * @since 2.2
+     */
+    @SuppressWarnings("nls")
+    public static final String CURRENT_DIR = ".";
+
+    /**
+     * The relative path to the parent directory.
+     *
+     * @since 2.2
+     */
+    @SuppressWarnings("nls")
+    public static final String PARENT_DIR = "..";
 
     /** The full path. */
     private final String path;
@@ -375,10 +404,10 @@ public abstract class SimpleAbstractPath extends AbstractPath {
             return this;
         }
         final String resolvedPath;
-        if (path.endsWith("/")) { //$NON-NLS-1$
+        if (path.endsWith(SEPARATOR)) {
             resolvedPath = path + that.path;
         } else {
-            resolvedPath = path + "/" + that.path; // //$NON-NLS-1$
+            resolvedPath = path + SEPARATOR + that.path; //
         }
         return createPath(resolvedPath);
     }
@@ -496,7 +525,7 @@ public abstract class SimpleAbstractPath extends AbstractPath {
 
     private synchronized void initOffsets() {
         if (offsets == null) {
-            if ("/".equals(path)) { //$NON-NLS-1$
+            if (ROOT_PATH.equals(path)) {
                 offsets = new int[0];
                 return;
             }

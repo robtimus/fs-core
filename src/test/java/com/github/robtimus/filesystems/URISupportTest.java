@@ -18,7 +18,10 @@
 package com.github.robtimus.filesystems;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.URI;
+import java.net.URISyntaxException;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("nls")
@@ -38,6 +41,16 @@ class URISupportTest {
     }
 
     @Test
+    void testCreateWithSchemeSpecificPartInvalid() {
+        String scheme = "";
+        String ssp = "//www.example.org";
+        String fragment = "foo";
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> URISupport.create(scheme, ssp, fragment));
+        assertInstanceOf(URISyntaxException.class, exception.getCause());
+    }
+
+    @Test
     void testCreateWithHost() {
         String scheme = "http";
         String host = "www.example.org";
@@ -50,6 +63,17 @@ class URISupportTest {
         assertEquals(path, uri.getPath());
         assertEquals(fragment, uri.getFragment());
         assertEquals("http://www.example.org/foo#bar", uri.toString());
+    }
+
+    @Test
+    void testCreateWithHostInvalid() {
+        String scheme = "";
+        String host = "www.example.org";
+        String path = "/foo";
+        String fragment = "bar";
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> URISupport.create(scheme, host, path, fragment));
+        assertInstanceOf(URISyntaxException.class, exception.getCause());
     }
 
     @Test
@@ -67,6 +91,19 @@ class URISupportTest {
         assertEquals(query, uri.getQuery());
         assertEquals(fragment, uri.getFragment());
         assertEquals("http://user@www.example.org/foo?q=a#bar", uri.toString());
+    }
+
+    @Test
+    void testCreateWithAuthorityInvalid() {
+        String scheme = "";
+        String authority = "user@www.example.org";
+        String path = "/foo";
+        String query = "q=a";
+        String fragment = "bar";
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> URISupport.create(scheme, authority, path, query, fragment));
+        assertInstanceOf(URISyntaxException.class, exception.getCause());
     }
 
     @Test
@@ -88,5 +125,20 @@ class URISupportTest {
         assertEquals(query, uri.getQuery());
         assertEquals(fragment, uri.getFragment());
         assertEquals("http://user@www.example.org:80/foo?q=a#bar", uri.toString());
+    }
+
+    @Test
+    void testCreateWithUserInfoHostAndPortInvalid() {
+        String scheme = "";
+        String userInfo = "user";
+        String host = "www.example.org";
+        int port = 80;
+        String path = "/foo";
+        String query = "q=a";
+        String fragment = "bar";
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> URISupport.create(scheme, userInfo, host, port, path, query, fragment));
+        assertInstanceOf(URISyntaxException.class, exception.getCause());
     }
 }

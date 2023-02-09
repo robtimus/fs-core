@@ -84,6 +84,7 @@ public final class PosixFilePermissionSupport {
      *
      * @param permissions The set of permissions.
      * @return The resulting permission bit mask.
+     * @throws NullPointerException If the given set is {@code null}.
      */
     public static int toMask(Set<PosixFilePermission> permissions) {
         int mask = 0;
@@ -111,6 +112,7 @@ public final class PosixFilePermissionSupport {
      * @param mask The permission bit mask to check.
      * @param permission The permission to check for.
      * @return {@code true} if the permission is set in the given permission bit mask, or {@code false} otherwise.
+     * @throws NullPointerException If the given set is {@code null}.
      */
     public static boolean hasPermission(int mask, PosixFilePermission permission) {
         switch (permission) {

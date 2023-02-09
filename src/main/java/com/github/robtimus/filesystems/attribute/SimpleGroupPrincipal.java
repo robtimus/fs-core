@@ -30,6 +30,7 @@ public class SimpleGroupPrincipal extends SimpleUserPrincipal implements GroupPr
      * Creates a new group principal.
      *
      * @param name The name of the group principal.
+     * @throws NullPointerException If the given name is {@code null}.
      */
     public SimpleGroupPrincipal(String name) {
         super(name);

@@ -33,6 +33,7 @@ public class SimpleUserPrincipal implements UserPrincipal {
      * Creates a new user principal.
      *
      * @param name The name of the user principal.
+     * @throws NullPointerException If the given name is {@code null}.
      */
     public SimpleUserPrincipal(String name) {
         this.name = Objects.requireNonNull(name);
