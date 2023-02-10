@@ -57,6 +57,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import com.github.robtimus.filesystems.Messages;
+import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Operation;
 
 @SuppressWarnings("nls")
 class FileAttributeSupportTest {
@@ -156,7 +157,7 @@ class FileAttributeSupportTest {
         }
 
         private void testWithWildCard(String attributes, FileAttributeViewMetadata metadata) {
-            Set<String> expected = metadata.attributes();
+            Set<String> expected = metadata.attributeNames(Operation.READ);
 
             Set<String> attributeNames = getAttributeNames(attributes, metadata);
 
@@ -179,7 +180,7 @@ class FileAttributeSupportTest {
         }
 
         private void testWithWildCardAndSpecifiedAttributes(String attributes, FileAttributeViewMetadata metadata) {
-            Set<String> expected = metadata.attributes();
+            Set<String> expected = metadata.attributeNames(Operation.READ);
 
             Set<String> attributeNames = getAttributeNames(attributes, metadata);
 
@@ -410,7 +411,7 @@ class FileAttributeSupportTest {
             void testAllAttributes() {
                 Map<String, Object> attributeMap = new HashMap<>();
                 BasicFileAttributes fileAttributes = mock(BasicFileAttributes.class);
-                Set<String> attributeNames = FileAttributeViewMetadata.BASIC.attributes();
+                Set<String> attributeNames = FileAttributeViewMetadata.BASIC.attributeNames(Operation.READ);
 
                 FileTime lastModifiedTime = FileTime.fromMillis(Long.MAX_VALUE);
                 FileTime lastAccessTime = FileTime.fromMillis(0);
@@ -694,7 +695,7 @@ class FileAttributeSupportTest {
             void testAllAttributes() {
                 Map<String, Object> attributeMap = new HashMap<>();
                 DosFileAttributes fileAttributes = mock(DosFileAttributes.class);
-                Set<String> attributeNames = FileAttributeViewMetadata.DOS.attributes();
+                Set<String> attributeNames = FileAttributeViewMetadata.DOS.attributeNames(Operation.READ);
 
                 FileTime lastModifiedTime = FileTime.fromMillis(Long.MAX_VALUE);
                 FileTime lastAccessTime = FileTime.fromMillis(0);
@@ -980,7 +981,7 @@ class FileAttributeSupportTest {
             void testAllAttributes() {
                 Map<String, Object> attributeMap = new HashMap<>();
                 PosixFileAttributes fileAttributes = mock(PosixFileAttributes.class);
-                Set<String> attributeNames = FileAttributeViewMetadata.POSIX.attributes();
+                Set<String> attributeNames = FileAttributeViewMetadata.POSIX.attributeNames(Operation.READ);
 
                 FileTime lastModifiedTime = FileTime.fromMillis(Long.MAX_VALUE);
                 FileTime lastAccessTime = FileTime.fromMillis(0);

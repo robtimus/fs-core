@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import com.github.robtimus.filesystems.Messages;
+import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Operation;
 
 /**
  * A utility class for file attributes.
@@ -195,7 +196,7 @@ public final class FileAttributeSupport {
             attributes = attributes.substring(indexOfColon + 1);
         }
 
-        Set<String> allowedAttributes = metadata.attributes();
+        Set<String> allowedAttributes = metadata.attributeNames(Operation.READ);
 
         Set<String> result = new HashSet<>(allowedAttributes.size());
         for (String attribute : attributes.split(",")) { //$NON-NLS-1$
