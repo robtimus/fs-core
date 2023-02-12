@@ -22,21 +22,26 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,9 +57,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import com.github.robtimus.filesystems.Messages;
-import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.GenericType;
+import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Builder;
 import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Operation;
-import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadataTest.ParameterizedTypeProvider.NestedGenerics;
 
 @SuppressWarnings("nls")
 class FileAttributeViewMetadataTest {
@@ -67,7 +71,7 @@ class FileAttributeViewMetadataTest {
         private final Set<String> expectedWritableAttributes;
 
         Basic() {
-            super(FileAttributeViewMetadata.BASIC, "basic");
+            super(FileAttributeViewMetadata.BASIC, BasicFileAttributeView.class, "basic");
 
             expectedAttributes = new HashMap<>();
             expectedAttributes.put("lastModifiedTime", FileTime.class);
@@ -112,7 +116,7 @@ class FileAttributeViewMetadataTest {
         private final Set<String> expectedWritableAttributes;
 
         FileOwner() {
-            super(FileAttributeViewMetadata.FILE_OWNER, "owner");
+            super(FileAttributeViewMetadata.FILE_OWNER, FileOwnerAttributeView.class, "owner");
 
             expectedAttributes = new HashMap<>();
             expectedAttributes.put("owner", UserPrincipal.class);
@@ -146,7 +150,7 @@ class FileAttributeViewMetadataTest {
         private final Set<String> expectedWritableAttributes;
 
         Dos() {
-            super(FileAttributeViewMetadata.DOS, "dos");
+            super(FileAttributeViewMetadata.DOS, DosFileAttributeView.class, "dos");
 
             expectedAttributes = new HashMap<>();
             expectedAttributes.put("lastModifiedTime", FileTime.class);
@@ -199,7 +203,9 @@ class FileAttributeViewMetadataTest {
         private final Set<String> expectedWritableAttributes;
 
         Posix() {
-            super(FileAttributeViewMetadata.POSIX, "posix");
+            super(FileAttributeViewMetadata.POSIX, PosixFileAttributeView.class, "posix");
+
+            Type expectedPermissionsType = assertDoesNotThrow(() -> PosixFileAttributes.class.getMethod("permissions").getGenericReturnType());
 
             expectedAttributes = new HashMap<>();
             expectedAttributes.put("lastModifiedTime", FileTime.class);
@@ -212,7 +218,7 @@ class FileAttributeViewMetadataTest {
             expectedAttributes.put("isOther", Boolean.class);
             expectedAttributes.put("fileKey", Object.class);
             expectedAttributes.put("owner", UserPrincipal.class);
-            expectedAttributes.put("permissions", GenericType.ofReturnType(PosixFileAttributes.class, "permissions"));
+            expectedAttributes.put("permissions", expectedPermissionsType);
             expectedAttributes.put("group", GroupPrincipal.class);
 
             expectedReadableAttributes = expectedAttributes.keySet();
@@ -240,6 +246,15 @@ class FileAttributeViewMetadataTest {
         Set<String> expectedWritableAttributeNames() {
             return expectedWritableAttributes;
         }
+
+        @Override
+        void testParameterizedType(String attributeName, ParameterizedType attributeType) {
+            assertEquals("permissions", attributeName);
+            assertEquals("java.util.Set<java.nio.file.attribute.PosixFilePermission>", attributeType.getTypeName());
+            assertEquals(Set.class, attributeType.getRawType());
+            assertArrayEquals(new Type[] { PosixFilePermission.class }, attributeType.getActualTypeArguments());
+            assertNull(attributeType.getOwnerType());
+        }
     }
 
     @Nested
@@ -250,10 +265,12 @@ class FileAttributeViewMetadataTest {
         private final Set<String> expectedWritableAttributes;
 
         Acl() {
-            super(FileAttributeViewMetadata.ACL, "acl");
+            super(FileAttributeViewMetadata.ACL, AclFileAttributeView.class, "acl");
+
+            Type expectedAclType = assertDoesNotThrow(() -> AclFileAttributeView.class.getMethod("getAcl").getGenericReturnType());
 
             expectedAttributes = new HashMap<>();
-            expectedAttributes.put("acl", GenericType.ofReturnType(AclFileAttributeView.class, "getAcl"));
+            expectedAttributes.put("acl", expectedAclType);
             expectedAttributes.put("owner", UserPrincipal.class);
 
             expectedReadableAttributes = expectedAttributes.keySet();
@@ -275,6 +292,15 @@ class FileAttributeViewMetadataTest {
         Set<String> expectedWritableAttributeNames() {
             return expectedWritableAttributes;
         }
+
+        @Override
+        void testParameterizedType(String attributeName, ParameterizedType attributeType) {
+            assertEquals("acl", attributeName);
+            assertEquals("java.util.List<java.nio.file.attribute.AclEntry>", attributeType.getTypeName());
+            assertEquals(List.class, attributeType.getRawType());
+            assertArrayEquals(new Type[] { AclEntry.class }, attributeType.getActualTypeArguments());
+            assertNull(attributeType.getOwnerType());
+        }
     }
 
     @Nested
@@ -285,9 +311,11 @@ class FileAttributeViewMetadataTest {
         private final Set<String> expectedWritableAttributes;
 
         Custom() {
-            super(FileAttributeViewMetadata.forView("custom")
+            super(FileAttributeViewMetadata.forView(FileAttributeView.class)
+                    .withViewName("custom")
                     // show that operations overwrite any existing readable / writable status
-                    .withAttributes(FileAttributeViewMetadata.forView("parent")
+                    .withAttributes(FileAttributeViewMetadata.forView(FileAttributeView.class)
+                            .withViewName("parent")
                             .withAttribute("readOnly", String.class)
                             .withAttribute("writeOnly", String.class)
                             .withAttribute("implicitReadWrite", String.class)
@@ -297,7 +325,9 @@ class FileAttributeViewMetadataTest {
                     .withAttribute("writeOnly", Integer.class, Operation.WRITE)
                     .withAttribute("implicitReadWrite", Integer.class)
                     .withAttribute("explicitReadWrite", Integer.class, Operation.READ, Operation.WRITE)
-                    .build(), "custom");
+                    .build(),
+                    FileAttributeView.class,
+                    "custom");
 
             expectedAttributes = new HashMap<>();
             expectedAttributes.put("readOnly", Integer.class);
@@ -336,10 +366,12 @@ class FileAttributeViewMetadataTest {
     abstract static class MetadataTest {
 
         private final FileAttributeViewMetadata metadata;
+        private final Class<? extends FileAttributeView> expectedViewType;
         private final String expectedViewName;
 
-        MetadataTest(FileAttributeViewMetadata metadata, String expectedViewName) {
+        MetadataTest(FileAttributeViewMetadata metadata, Class<? extends FileAttributeView> expectedViewType, String expectedViewName) {
             this.metadata = metadata;
+            this.expectedViewType = expectedViewType;
             this.expectedViewName = expectedViewName;
         }
 
@@ -348,6 +380,11 @@ class FileAttributeViewMetadataTest {
         abstract Set<String> expectedReadableAttributeNames();
 
         abstract Set<String> expectedWritableAttributeNames();
+
+        @Test
+        void testViewType() {
+            assertEquals(expectedViewType, metadata.viewType());
+        }
 
         @Test
         void testViewName() {
@@ -372,7 +409,15 @@ class FileAttributeViewMetadataTest {
         @ParameterizedTest(name = "{0}")
         @MethodSource("attributeTypeArguments")
         void testAttributeType(String attributeName, Type expectedAttributeType) {
-            assertEquals(expectedAttributeType, metadata.attributeType(attributeName));
+            Type attributeType = metadata.attributeType(attributeName);
+            assertEquals(expectedAttributeType, attributeType);
+            if (attributeType instanceof ParameterizedType) {
+                testParameterizedType(attributeName, (ParameterizedType) attributeType);
+            }
+        }
+
+        void testParameterizedType(String attributeName, ParameterizedType attributeType) {
+            fail(String.format("Parameterized type test not setup for attributeName '%s'; attribute type = %s", attributeName, attributeType));
         }
 
         Stream<Arguments> attributeTypeArguments() {
@@ -474,241 +519,127 @@ class FileAttributeViewMetadataTest {
     }
 
     @Nested
-    class GenericTypeTest {
-
-        @Test
-        void testOfCollection() {
-            testParameterizedType(GenericType.ofCollection(String.class), ParameterizedTypeProvider.COLLECTION_TYPE);
-        }
-
-        @Test
-        void testOfSet() {
-            testParameterizedType(GenericType.ofSet(String.class), ParameterizedTypeProvider.SET_TYPE);
-        }
-
-        @Test
-        void testOfList() {
-            testParameterizedType(GenericType.ofList(String.class), ParameterizedTypeProvider.LIST_TYPE);
-        }
-
-        @Test
-        void testOfMap() {
-            testParameterizedType(GenericType.ofMap(String.class, Integer.class), ParameterizedTypeProvider.MAP_TYPE);
-        }
-
-        @Test
-        void testOfSingleArgument() {
-            testParameterizedType(GenericType.of(Set.class, String.class), ParameterizedTypeProvider.SET_TYPE);
-        }
-
-        @Test
-        void testOfMultipleArguments() {
-            testParameterizedType(GenericType.of(Map.class, String.class, Integer.class), ParameterizedTypeProvider.MAP_TYPE);
-        }
-
-        @Test
-        void testOfNested() {
-            testParameterizedType(GenericType.of(ParameterizedTypeProvider.NestedGenerics.class, Boolean.class, String.class),
-                    ParameterizedTypeProvider.NESTED_TYPE);
-        }
+    class BuilderTest {
 
         @Nested
-        class OfReturnType {
+        class DefaultViewName {
 
             @Test
-            void testOfExistingMethod() {
-                testParameterizedType(GenericType.ofReturnType(AclFileAttributeView.class, "getAcl"), GenericType.of(List.class, AclEntry.class));
+            void testEndingWithFileAttributeView() {
+                assertEquals("basic", Builder.defaultViewName(BasicFileAttributeView.class));
+                assertEquals("dos", Builder.defaultViewName(DosFileAttributeView.class));
+                assertEquals("posix", Builder.defaultViewName(PosixFileAttributeView.class));
+                assertEquals("acl", Builder.defaultViewName(AclFileAttributeView.class));
             }
 
             @Test
-            void testOfNonExistingMethod() {
+            void testEndingWithAttributeView() {
+                assertEquals("file", Builder.defaultViewName(FileAttributeView.class));
+                assertEquals("fileOwner", Builder.defaultViewName(FileOwnerAttributeView.class));
+            }
+
+            @Test
+            void testEndingWithView() {
+                assertEquals("attribute", Builder.defaultViewName(AttributeView.class));
+                assertEquals("test", Builder.defaultViewName(TestView.class));
+            }
+
+            @Test
+            void testNotEndingWithView() {
+                assertEquals("fileAttributeViewSub", Builder.defaultViewName(FileAttributeViewSub.class));
+            }
+        }
+
+        @Test
+        void testEmptyViewName() {
+            Builder builder = FileAttributeViewMetadata.forView(BasicFileAttributeView.class);
+
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> builder.withViewName(""));
+            assertEquals(AttributeMessages.FileAttributeViewMetadata.emptyViewName(), exception.getMessage());
+        }
+
+        @Test
+        void testEmptyAttributeName() {
+            Builder builder = FileAttributeViewMetadata.forView(BasicFileAttributeView.class);
+
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> builder.withAttribute("", String.class));
+            assertEquals(AttributeMessages.FileAttributeViewMetadata.emptyAttributeName(), exception.getMessage());
+        }
+
+        @Test
+        void testEmptyAttributeNameWithOperations() {
+            Builder builder = FileAttributeViewMetadata.forView(BasicFileAttributeView.class);
+
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> builder.withAttribute("", String.class, Operation.READ));
+            assertEquals(AttributeMessages.FileAttributeViewMetadata.emptyAttributeName(), exception.getMessage());
+        }
+
+        @Nested
+        class ReturnType {
+
+            @Test
+            void testExistingMethod() {
+                Type type = Builder.returnType(AclFileAttributeView.class, "getAcl");
+                ParameterizedType parameterizedType = assertInstanceOf(ParameterizedType.class, type);
+                testParameterizedType(parameterizedType, "java.util.List<java.nio.file.attribute.AclEntry>", List.class, AclEntry.class);
+            }
+
+            @Test
+            void testNonExistingMethod() {
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                        () -> GenericType.ofReturnType(AclFileAttributeView.class, "nonExisting"));
+                        () -> Builder.returnType(AclFileAttributeView.class, "nonExisting"));
                 assertInstanceOf(NoSuchMethodException.class, exception.getCause());
             }
 
             @Test
-            void testOfNonPublicMethod() {
+            void testNonPublicMethod() {
                 Class<?> declaringType = getClass();
                 String methodName = "testMethod";
                 assertDoesNotThrow(() -> declaringType.getDeclaredMethod(methodName));
 
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                        () -> GenericType.ofReturnType(declaringType, methodName));
+                        () -> Builder.returnType(declaringType, methodName));
                 assertInstanceOf(NoSuchMethodException.class, exception.getCause());
             }
 
             @Test
             void testWithWrongArgumentTypes() {
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                        () -> GenericType.ofReturnType(AclFileAttributeView.class, "getAcl", String.class));
+                        () -> Builder.returnType(AclFileAttributeView.class, "getAcl", String.class));
                 assertInstanceOf(NoSuchMethodException.class, exception.getCause());
             }
 
             @Test
-            void testWithNonParameterizedReturnType() {
-                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                        () -> GenericType.ofReturnType(Object.class, "toString"));
-                assertEquals(AttributeMessages.FileAttributeViewMetadata.noParameterizedReturnType(Object.class, "toString"), exception.getMessage());
+            void testNonParameterizedReturnType() {
+                Type type = Builder.returnType(Object.class, "toString");
+                assertEquals(String.class, type);
             }
 
             Set<String> testMethod() {
                 return Collections.emptySet();
             }
-        }
 
-        private void testParameterizedType(ParameterizedType type, ParameterizedType expected) {
-            assertEquals(expected, type);
-            assertEquals(expected.getTypeName(), type.getTypeName());
-            assertArrayEquals(expected.getActualTypeArguments(), type.getActualTypeArguments());
-            assertEquals(expected.getRawType(), type.getRawType());
-            assertEquals(expected.getOwnerType(), type.getOwnerType());
+            private void testParameterizedType(ParameterizedType type, String expectedTypeName, Class<?> expectedRawType,
+                    Type... expectedActualTypeArguments) {
+
+                assertEquals(expectedTypeName, type.getTypeName());
+                assertEquals(expectedRawType, type.getRawType());
+                assertNull(type.getOwnerType());
+                assertArrayEquals(expectedActualTypeArguments, type.getActualTypeArguments());
+            }
         }
     }
 
-    @Nested
-    class ParameterizedTypeImplTest {
-
-        @Test
-        void testActualTypeArguments() {
-            ParameterizedType type = GenericType.ofMap(String.class, Integer.class);
-
-            Type[] actualTypeArguments = type.getActualTypeArguments();
-
-            assertArrayEquals(new Type[] { String.class, Integer.class }, actualTypeArguments);
-            assertArrayEquals(ParameterizedTypeProvider.MAP_TYPE.getActualTypeArguments(), type.getActualTypeArguments());
-
-            // Test immutability of the stored type arguments
-            actualTypeArguments[0] = Boolean.class;
-
-            assertArrayEquals(new Type[] { String.class, Integer.class }, type.getActualTypeArguments());
-        }
-
-        @Test
-        void testRawType() {
-            ParameterizedType type = GenericType.ofList(String.class);
-
-            assertEquals(List.class, type.getRawType());
-            assertEquals(ParameterizedTypeProvider.LIST_TYPE.getRawType(), type.getRawType());
-        }
-
-        @Test
-        void testOwnerType() {
-            ParameterizedType type = GenericType.ofSet(String.class);
-
-            assertNull(type.getOwnerType());
-            assertEquals(ParameterizedTypeProvider.SET_TYPE.getOwnerType(), type.getOwnerType());
-        }
-
-        @Nested
-        class TypeName {
-
-            @Test
-            void testOneTypeArgument() {
-                ParameterizedType type = GenericType.ofSet(String.class);
-
-                assertEquals(ParameterizedTypeProvider.SET_TYPE.getTypeName(), type.getTypeName());
-            }
-
-            @Test
-            void testMultipleTypeArguments() {
-                ParameterizedType type = GenericType.ofMap(String.class, Integer.class);
-
-                assertEquals(ParameterizedTypeProvider.MAP_TYPE.getTypeName(), type.getTypeName());
-            }
-        }
-
-        @Nested
-        class Equals {
-
-            @Test
-            void testEqual() {
-                testEqual(GenericType.ofCollection(String.class), ParameterizedTypeProvider.COLLECTION_TYPE);
-                testEqual(GenericType.ofSet(String.class), ParameterizedTypeProvider.SET_TYPE);
-                testEqual(GenericType.ofList(String.class), ParameterizedTypeProvider.LIST_TYPE);
-                testEqual(GenericType.ofMap(String.class, Integer.class), ParameterizedTypeProvider.MAP_TYPE);
-                testEqual(GenericType.of(NestedGenerics.class, Boolean.class, String.class), ParameterizedTypeProvider.NESTED_TYPE);
-            }
-
-            private void testEqual(ParameterizedType fsCoreType, ParameterizedType jdkType) {
-                // Test reflexivity
-                assertEquals(fsCoreType, fsCoreType);
-
-                // Test symmetry
-                assertEquals(jdkType, fsCoreType);
-                assertEquals(fsCoreType, jdkType);
-            }
-
-            @Test
-            void testDifferentRawType() {
-                testNotEqual(GenericType.ofSet(String.class), ParameterizedTypeProvider.COLLECTION_TYPE);
-            }
-
-            @Test
-            void testDifferentActualTypeArguments() {
-                testNotEqual(GenericType.ofCollection(Integer.class), ParameterizedTypeProvider.COLLECTION_TYPE);
-                testNotEqual(GenericType.of(Map.class, String.class), ParameterizedTypeProvider.MAP_TYPE);
-                testNotEqual(GenericType.of(Map.class, String.class, Integer.class, Boolean.class), ParameterizedTypeProvider.MAP_TYPE);
-            }
-
-            private void testNotEqual(ParameterizedType fsCoreType, ParameterizedType jdkType) {
-                // Test symmetry
-                assertNotEquals(jdkType, fsCoreType);
-                assertNotEquals(fsCoreType, jdkType);
-            }
-
-            @Test
-            void testDifferentType() {
-                Object obj = Collection.class;
-                boolean result = GenericType.ofCollection(String.class).equals(obj);
-                assertFalse(result);
-            }
-
-            @Test
-            void testNull() {
-                assertNotEquals(null, GenericType.ofCollection(String.class));
-            }
-        }
-
-        @Test
-        void testHashCode() {
-            testHashCode(GenericType.ofCollection(String.class), ParameterizedTypeProvider.COLLECTION_TYPE);
-            testHashCode(GenericType.ofSet(String.class), ParameterizedTypeProvider.SET_TYPE);
-            testHashCode(GenericType.ofList(String.class), ParameterizedTypeProvider.LIST_TYPE);
-            testHashCode(GenericType.ofMap(String.class, Integer.class), ParameterizedTypeProvider.MAP_TYPE);
-            testHashCode(GenericType.of(NestedGenerics.class, Boolean.class, String.class), ParameterizedTypeProvider.NESTED_TYPE);
-        }
-
-        private void testHashCode(ParameterizedType fsCoreType, ParameterizedType jdkType) {
-            assertEquals(jdkType.hashCode(), fsCoreType.hashCode());
-        }
+    private interface AttributeView extends FileAttributeView {
+        // No additional content
     }
 
-    static final class ParameterizedTypeProvider {
+    private interface TestView extends FileAttributeView {
+        // No additional content
+    }
 
-        private static final ParameterizedType COLLECTION_TYPE = getParameterizedType("collection");
-        private static final ParameterizedType SET_TYPE = getParameterizedType("set");
-        private static final ParameterizedType LIST_TYPE = getParameterizedType("list");
-        private static final ParameterizedType MAP_TYPE = getParameterizedType("map");
-        private static final ParameterizedType NESTED_TYPE = getParameterizedType("nested");
-
-        Collection<String> collection;
-        Set<String> set;
-        List<String> list;
-        Map<String, Integer> map;
-        NestedGenerics<Boolean, String> nested;
-
-        private static ParameterizedType getParameterizedType(String fieldName) {
-            try {
-                return (ParameterizedType) ParameterizedTypeProvider.class.getDeclaredField(fieldName).getGenericType();
-            } catch (NoSuchFieldException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-
-        interface NestedGenerics<I, O> {
-
-            O call(I input);
-        }
+    private interface FileAttributeViewSub extends FileAttributeView {
+        // No additional content
     }
 }
