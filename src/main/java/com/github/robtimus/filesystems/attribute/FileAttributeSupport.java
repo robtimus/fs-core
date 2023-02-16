@@ -45,6 +45,7 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.FileTime;
@@ -54,11 +55,15 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import com.github.robtimus.filesystems.Messages;
 import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Operation;
 
@@ -66,8 +71,8 @@ import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Opera
  * A utility class for file attributes.
  *
  * <h2>Reading attributes</h2>
- * The methods in this class can be used to implement {@link FileSystemProvider#readAttributes(Path, String, LinkOption...)} as follows, using a
- * switch expression and constants from {@link FileAttributeConstants}:
+ * Methods in this class can be used to implement {@link FileSystemProvider#readAttributes(Path, String, LinkOption...)} as follows, using a switch
+ * expression and constants from {@link FileAttributeConstants}:
  * <pre><code>
  * &#64;Override
  * public Map&lt;String, Object&gt; readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
@@ -102,7 +107,7 @@ import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Opera
  * </code></pre>
  *
  * <h2>Setting attributes</h2>
- * The methods in this class can be used to implement {@link FileSystemProvider#setAttribute(Path, String, Object, LinkOption...)} as follows, using
+ * Methods in this class can be used to implement {@link FileSystemProvider#setAttribute(Path, String, Object, LinkOption...)} as follows, using
  * constants from {@link FileAttributeConstants}:
  * <pre><code>
  * &#64;Override
@@ -140,6 +145,12 @@ import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Opera
  *         FileAttributeSupport.setAttribute(attribute, value, myView); // upcast to BasicFileAttributeView
  *     }
  * </code></pre>
+ *
+ * <h3>Setting attributes during object creation</h3>
+ * {@link #toAttributeMap(FileAttribute[], FileAttributeViewMetadata...)} and {@link #toAttributeMap(FileAttribute[], Collection)} can be used to
+ * collect {@link FileAttribute} objects into maps where the key and value of each entry can be passed to any of the {@code setAttribute} methods of
+ * this class. This allows file attributes to be set from methods like {@link FileSystemProvider#createDirectory(Path, FileAttribute...)} or
+ * {@link FileSystemProvider#newByteChannel(Path, Set, FileAttribute...)}.
  *
  * @author Rob Spoor
  * @since 2.2
@@ -418,5 +429,60 @@ public final class FileAttributeSupport {
         } else {
             setAttribute(attributeName, value, (FileOwnerAttributeView) view);
         }
+    }
+
+    /**
+     * Collects several {@link FileAttribute} objects into a map.
+     * Each entry of the map can be used with {@link FileSystemProvider#setAttribute(Path, String, Object, LinkOption...)}. Combined with
+     * {@link #getViewName(String)} and {@link #getAttributeName(String)}, each entry can also be used with any of the {@code setAttribute} methods
+     * of this class.
+     *
+     * @param attributes The {@link FileAttribute} objects to collect.
+     * @param supportedViews A number of {@link FileAttributeViewMetadata} objects representing the supported views.
+     * @return A map where each key is the name of a given {@link FileAttribute} object, prefixed with the matching view name where needed.
+     * @throws NullPointerException If any of the given {@link FileAttribute} or {@link FileAttributeViewMetadata} objects is {@code null}.
+     * @throws UnsupportedOperationException If any of the given {@link FileAttribute} objects refers to a view that is not referred to by any of the
+     *                                           given supported {@link FileAttributeViewMetadata} objects.
+     */
+    public static Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, FileAttributeViewMetadata... supportedViews) {
+        return toAttributeMap(attributes, Arrays.asList(supportedViews));
+    }
+
+    /**
+     * Collects several {@link FileAttribute} objects into a map.
+     * Each entry of the map can be used with {@link FileSystemProvider#setAttribute(Path, String, Object, LinkOption...)}. Combined with
+     * {@link #getViewName(String)} and {@link #getAttributeName(String)}, each entry can also be used with any of the {@code setAttribute} methods
+     * of this class.
+     *
+     * @param attributes The {@link FileAttribute} objects to collect.
+     * @param supportedViews A collection with {@link FileAttributeViewMetadata} objects representing the supported views.
+     * @return A map where each key is the name of a given {@link FileAttribute} object, prefixed with the matching view name where needed.
+     * @throws NullPointerException If any of the given {@link FileAttribute} or {@link FileAttributeViewMetadata} objects is {@code null}.
+     * @throws UnsupportedOperationException If any of the given {@link FileAttribute} objects refers to a view that is not referred to by any of the
+     *                                           given supported {@link FileAttributeViewMetadata} objects.
+     */
+    public static Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, Collection<FileAttributeViewMetadata> supportedViews) {
+        Map<String, FileAttributeViewMetadata> metadataByName = supportedViews.stream()
+                .collect(Collectors.toMap(FileAttributeViewMetadata::viewName, Function.identity()));
+        return Arrays.stream(attributes)
+                .collect(Collectors.toMap(a -> attributeKey(a, metadataByName), FileAttribute::value));
+    }
+
+    private static String attributeKey(FileAttribute<?> attribute, Map<String, FileAttributeViewMetadata> metadataByName) {
+        String attributeName = attribute.name();
+        String viewName = getViewName(attributeName);
+        attributeName = getAttributeName(attributeName);
+
+        FileAttributeViewMetadata metadata = metadataByName.get(viewName);
+        if (metadata == null) {
+            throw Messages.fileSystemProvider().unsupportedFileAttributeView(viewName);
+        }
+
+        Set<String> attributeNames = metadata.attributeNames(Operation.WRITE);
+        if (!attributeNames.contains(attributeName)) {
+            throw Messages.fileSystemProvider().unsupportedFileAttribute(attribute.name());
+        }
+
+        return viewName + ":" + attributeName; //$NON-NLS-1$
     }
 }
