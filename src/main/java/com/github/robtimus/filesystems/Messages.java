@@ -452,6 +452,20 @@ public final class Messages {
         }
 
         /**
+         * Creates an exception that can be thrown if {@link FileSystemProvider#newByteChannel(Path, Set, FileAttribute...)},
+         * {@link FileSystemProvider#createDirectory(Path, FileAttribute...)} or a similar method is called with an unsupported value for a supported
+         * file attribute.
+         *
+         * @param attribute The attribute.
+         * @param value The unsupported value.
+         * @return The created exception.
+         * @since 2.2
+         */
+        public UnsupportedOperationException unsupportedCreateFileAttributeValue(String attribute, Object value) {
+            return new UnsupportedOperationException(getMessage("fileSystemProvider.unsupportedFileAttributeValue", attribute, value)); //$NON-NLS-1$
+        }
+
+        /**
          * Creates an exception that can be thrown if {@link FileSystemProvider#readAttributes(Path, String, LinkOption...)} or
          * {@link FileSystemProvider#setAttribute(Path, String, Object, LinkOption...)} is called with an unsupported file attribute.
          *

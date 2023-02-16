@@ -36,6 +36,10 @@ import static com.github.robtimus.filesystems.attribute.FileAttributeConstants.R
 import static com.github.robtimus.filesystems.attribute.FileAttributeConstants.SIZE;
 import static com.github.robtimus.filesystems.attribute.FileAttributeConstants.SYSTEM;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -57,6 +61,7 @@ import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -442,7 +447,9 @@ public final class FileAttributeSupport {
      * @return A map where each key is the name of a given {@link FileAttribute} object, prefixed with the matching view name where needed.
      * @throws NullPointerException If any of the given {@link FileAttribute} or {@link FileAttributeViewMetadata} objects is {@code null}.
      * @throws UnsupportedOperationException If any of the given {@link FileAttribute} objects refers to a view that is not referred to by any of the
-     *                                           given supported {@link FileAttributeViewMetadata} objects.
+     *                                           given supported {@link FileAttributeViewMetadata} objects, or has a non-supported name,
+     *                                           or has a value that does not match the
+     *                                           {@link FileAttributeViewMetadata#attributeType(String) expected type}.
      */
     public static Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, FileAttributeViewMetadata... supportedViews) {
         return toAttributeMap(attributes, Arrays.asList(supportedViews));
@@ -459,30 +466,57 @@ public final class FileAttributeSupport {
      * @return A map where each key is the name of a given {@link FileAttribute} object, prefixed with the matching view name where needed.
      * @throws NullPointerException If any of the given {@link FileAttribute} or {@link FileAttributeViewMetadata} objects is {@code null}.
      * @throws UnsupportedOperationException If any of the given {@link FileAttribute} objects refers to a view that is not referred to by any of the
-     *                                           given supported {@link FileAttributeViewMetadata} objects.
+     *                                           given supported {@link FileAttributeViewMetadata} objects, or has a non-supported name,
+     *                                           or has a value that does not match the
+     *                                           {@link FileAttributeViewMetadata#attributeType(String) expected type}.
      */
     public static Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, Collection<FileAttributeViewMetadata> supportedViews) {
         Map<String, FileAttributeViewMetadata> metadataByName = supportedViews.stream()
                 .collect(Collectors.toMap(FileAttributeViewMetadata::viewName, Function.identity()));
-        return Arrays.stream(attributes)
-                .collect(Collectors.toMap(a -> attributeKey(a, metadataByName), FileAttribute::value));
+
+        Map<String, Object> attributeMap = new HashMap<>();
+        for (FileAttribute<?> attribute : attributes) {
+            String attributeName = attribute.name();
+            String viewName = getViewName(attributeName);
+            attributeName = getAttributeName(attributeName);
+
+            FileAttributeViewMetadata metadata = metadataByName.get(viewName);
+            if (metadata == null) {
+                throw Messages.fileSystemProvider().unsupportedFileAttributeView(viewName);
+            }
+
+            if (!metadata.supportsAttribute(attributeName, Operation.WRITE)) {
+                throw Messages.fileSystemProvider().unsupportedCreateFileAttribute(attribute.name());
+            }
+
+            Object attributeValue = attribute.value();
+            if (!isInstance(attributeValue, metadata.attributeType(attributeName))) {
+                throw Messages.fileSystemProvider().unsupportedCreateFileAttributeValue(attribute.name(), attribute.value());
+            }
+
+            attributeMap.put(viewName + ":" + attributeName, attributeValue); //$NON-NLS-1$
+        }
+
+        return attributeMap;
     }
 
-    private static String attributeKey(FileAttribute<?> attribute, Map<String, FileAttributeViewMetadata> metadataByName) {
-        String attributeName = attribute.name();
-        String viewName = getViewName(attributeName);
-        attributeName = getAttributeName(attributeName);
+    static boolean isInstance(Object object, Type type) {
+        Class<?> rawType = getRawType(type);
+        return rawType != null && rawType.isInstance(object);
+    }
 
-        FileAttributeViewMetadata metadata = metadataByName.get(viewName);
-        if (metadata == null) {
-            throw Messages.fileSystemProvider().unsupportedFileAttributeView(viewName);
+    private static Class<?> getRawType(Type type) {
+        if (type instanceof Class<?>) {
+            return (Class<?>) type;
         }
-
-        Set<String> attributeNames = metadata.attributeNames(Operation.WRITE);
-        if (!attributeNames.contains(attributeName)) {
-            throw Messages.fileSystemProvider().unsupportedFileAttribute(attribute.name());
+        if (type instanceof ParameterizedType) {
+            Type rawType = ((ParameterizedType) type).getRawType();
+            return getRawType(rawType);
         }
-
-        return viewName + ":" + attributeName; //$NON-NLS-1$
+        if (type instanceof GenericArrayType) {
+            Type componentType = ((GenericArrayType) type).getGenericComponentType();
+            return Array.newInstance(getRawType(componentType), 0).getClass();
+        }
+        return null;
     }
 }

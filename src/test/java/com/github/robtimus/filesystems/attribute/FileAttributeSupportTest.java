@@ -17,20 +17,28 @@
 
 package com.github.robtimus.filesystems.attribute;
 
+import static com.github.robtimus.filesystems.attribute.FileAttributeConstants.PERMISSIONS;
 import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.getAttributeName;
 import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.getAttributeNames;
 import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.getViewName;
+import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.isInstance;
 import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.populateAttributeMap;
 import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.setAttribute;
 import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.toAttributeMap;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import java.io.IOException;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Type;
 import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -48,6 +56,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1356,9 +1365,76 @@ class FileAttributeSupportTest {
                     new SimpleFileAttribute<>(attributeName, new SimpleUserPrincipal("test")),
             };
 
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
                     () -> toAttributeMap(attributes, FileAttributeViewMetadata.BASIC, FileAttributeViewMetadata.POSIX));
-            assertEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName).getMessage(), exception.getMessage());
+            assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute(attributeName).getMessage(), exception.getMessage());
+        }
+
+        @Test
+        void testWithUnsupportedAttributeValue() {
+            FileAttribute<?>[] attributes = {
+                    new SimpleFileAttribute<>("lastModifiedTime", FileTime.fromMillis(0)),
+                    new SimpleFileAttribute<>("basic:lastAccessTime", FileTime.fromMillis(Long.MAX_VALUE)),
+                    new SimpleFileAttribute<>("posix:permissions", EnumSet.of(PosixFilePermission.OWNER_READ)),
+                    new SimpleFileAttribute<>("posix:owner", FileTime.fromMillis(0)),
+            };
+
+            UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
+                    () -> toAttributeMap(attributes, FileAttributeViewMetadata.BASIC, FileAttributeViewMetadata.POSIX));
+            assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttributeValue("posix:owner", FileTime.fromMillis(0)).getMessage(),
+                    exception.getMessage());
+        }
+    }
+
+    @Nested
+    class IsInstance {
+
+        Class<?>[] types = {};
+
+        @Test
+        void testInstanceOfClass() {
+            assertTrue(isInstance("foo", String.class));
+        }
+
+        @Test
+        void testNotInstanceOfClass() {
+            assertFalse(isInstance("foo", Integer.class));
+        }
+
+        @Test
+        void testInstanceOfParameterizedType() {
+            Type type = FileAttributeViewMetadata.POSIX.attributeType(PERMISSIONS);
+            assertTrue(isInstance(EnumSet.allOf(PosixFilePermission.class), type));
+        }
+
+        @Test
+        void testNotInstanceOfParameterizedType() {
+            Type type = FileAttributeViewMetadata.POSIX.attributeType(PERMISSIONS);
+            assertFalse(isInstance("foo", type));
+        }
+
+        @Test
+        void testInstanceOfGenericArray() {
+            Type type = assertDoesNotThrow(() -> getClass().getDeclaredField("types").getGenericType());
+            assertInstanceOf(GenericArrayType.class, type);
+            assertTrue(isInstance(types, type));
+        }
+
+        @Test
+        void testNotInstanceOfGenericArray() {
+            Type type = assertDoesNotThrow(() -> getClass().getDeclaredField("types").getGenericType());
+            assertInstanceOf(GenericArrayType.class, type);
+            assertFalse(isInstance(String.class, type));
+        }
+
+        @Test
+        void testNonSupportedType() {
+            Type type = new Type() {
+                // no methods to implement
+            };
+            assertFalse(isInstance("foo", type));
+            assertFalse(isInstance(EnumSet.allOf(PosixFilePermission.class), type));
+            assertFalse(isInstance(types, type));
         }
     }
 
