@@ -61,6 +61,7 @@ import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -471,6 +472,54 @@ public final class FileAttributeSupport {
      *                                           {@link FileAttributeViewMetadata#attributeType(String) expected type}.
      */
     public static Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, Collection<FileAttributeViewMetadata> supportedViews) {
+        return toAttributeMap(attributes, supportedViews, Collections.emptySet());
+    }
+
+    /**
+     * Collects several {@link FileAttribute} objects into a map.
+     * Each entry of the map can be used with {@link FileSystemProvider#setAttribute(Path, String, Object, LinkOption...)}. Combined with
+     * {@link #getViewName(String)} and {@link #getAttributeName(String)}, each entry can also be used with any of the {@code setAttribute} methods
+     * of this class.
+     *
+     * @param attributes The {@link FileAttribute} objects to collect.
+     * @param supportedViews A collection with {@link FileAttributeViewMetadata} objects representing the supported views.
+     * @param nonSupportedAttributeNames A collection of attribute names that are not supported, regardless of what the supported views say.
+     *                                       This can be used for attributes that cannot be set during creation but only afterwards.
+     *                                       Elements should not be prefixed with view names.
+     * @return A map where each key is the name of a given {@link FileAttribute} object, prefixed with the matching view name where needed.
+     * @throws NullPointerException If any of the given {@link FileAttribute} or {@link FileAttributeViewMetadata} objects is {@code null}.
+     * @throws UnsupportedOperationException If any of the given {@link FileAttribute} objects refers to a view that is not referred to by any of the
+     *                                           given supported {@link FileAttributeViewMetadata} objects, or has a non-supported name,
+     *                                           or has a value that does not match the
+     *                                           {@link FileAttributeViewMetadata#attributeType(String) expected type}.
+     */
+    public static Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, Collection<FileAttributeViewMetadata> supportedViews,
+            String... nonSupportedAttributeNames) {
+
+        return toAttributeMap(attributes, supportedViews, Arrays.asList(nonSupportedAttributeNames));
+    }
+
+    /**
+     * Collects several {@link FileAttribute} objects into a map.
+     * Each entry of the map can be used with {@link FileSystemProvider#setAttribute(Path, String, Object, LinkOption...)}. Combined with
+     * {@link #getViewName(String)} and {@link #getAttributeName(String)}, each entry can also be used with any of the {@code setAttribute} methods
+     * of this class.
+     *
+     * @param attributes The {@link FileAttribute} objects to collect.
+     * @param supportedViews A collection with {@link FileAttributeViewMetadata} objects representing the supported views.
+     * @param nonSupportedAttributeNames A collection of attribute names that are not supported, regardless of what the supported views say.
+     *                                       This can be used for attributes that cannot be set during creation but only afterwards.
+     *                                       Elements should not be prefixed with view names.
+     * @return A map where each key is the name of a given {@link FileAttribute} object, prefixed with the matching view name where needed.
+     * @throws NullPointerException If any of the given {@link FileAttribute} or {@link FileAttributeViewMetadata} objects is {@code null}.
+     * @throws UnsupportedOperationException If any of the given {@link FileAttribute} objects refers to a view that is not referred to by any of the
+     *                                           given supported {@link FileAttributeViewMetadata} objects, or has a non-supported name,
+     *                                           or has a value that does not match the
+     *                                           {@link FileAttributeViewMetadata#attributeType(String) expected type}.
+     */
+    public static Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, Collection<FileAttributeViewMetadata> supportedViews,
+            Collection<String> nonSupportedAttributeNames) {
+
         Map<String, FileAttributeViewMetadata> metadataByName = supportedViews.stream()
                 .collect(Collectors.toMap(FileAttributeViewMetadata::viewName, Function.identity()));
 
@@ -485,7 +534,7 @@ public final class FileAttributeSupport {
                 throw Messages.fileSystemProvider().unsupportedFileAttributeView(viewName);
             }
 
-            if (!metadata.supportsAttribute(attributeName, Operation.WRITE)) {
+            if (!metadata.supportsAttribute(attributeName, Operation.WRITE) || nonSupportedAttributeNames.contains(attributeName)) {
                 throw Messages.fileSystemProvider().unsupportedCreateFileAttribute(attribute.name());
             }
 

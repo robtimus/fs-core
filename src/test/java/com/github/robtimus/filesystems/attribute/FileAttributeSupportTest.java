@@ -55,6 +55,8 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -1341,6 +1343,10 @@ class FileAttributeSupportTest {
             expected.put("posix:owner", new SimpleUserPrincipal("test"));
 
             assertEquals(expected, attributeMap);
+
+            attributeMap = toAttributeMap(attributes, Arrays.asList(FileAttributeViewMetadata.BASIC, FileAttributeViewMetadata.POSIX), "acl");
+
+            assertEquals(expected, attributeMap);
         }
 
         @Test
@@ -1368,6 +1374,20 @@ class FileAttributeSupportTest {
             UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
                     () -> toAttributeMap(attributes, FileAttributeViewMetadata.BASIC, FileAttributeViewMetadata.POSIX));
             assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute(attributeName).getMessage(), exception.getMessage());
+        }
+
+        @Test
+        void testWithDisallowedAttribute() {
+            FileAttribute<?>[] attributes = {
+                    new SimpleFileAttribute<>("lastModifiedTime", FileTime.fromMillis(0)),
+                    new SimpleFileAttribute<>("basic:lastAccessTime", FileTime.fromMillis(Long.MAX_VALUE)),
+                    new SimpleFileAttribute<>("posix:owner", new SimpleUserPrincipal("test")),
+            };
+            Collection<FileAttributeViewMetadata> views = Arrays.asList(FileAttributeViewMetadata.BASIC, FileAttributeViewMetadata.POSIX);
+
+            UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
+                    () -> toAttributeMap(attributes, views, "lastAccessTime"));
+            assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute("basic:lastAccessTime").getMessage(), exception.getMessage());
         }
 
         @Test
