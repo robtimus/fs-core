@@ -77,18 +77,13 @@ import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Opera
  * A utility class for file attributes.
  *
  * <h2>Reading attributes</h2>
- * Methods in this class can be used to implement {@link FileSystemProvider#readAttributes(Path, String, LinkOption...)} as follows, using a switch
- * expression and constants from {@link FileAttributeConstants}:
+ * Methods of this class can be used to implement {@link FileSystemProvider#readAttributes(Path, String, LinkOption...)} as follows, using a
+ * {@link FileAttributeViewCollection} instance called {@code views}:
  * <pre><code>
  * &#64;Override
  * public Map&lt;String, Object&gt; readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
  *     String viewName = getViewName(attributes);
- *     FileAttributeViewMetadata view = switch (viewName) {
- *         case BASIC_VIEW:      yield FileAttributeViewMetadata.BASIC;
- *         case FILE_OWNER_VIEW: yield FileAttributeViewMetadata.FILE_OWNER;
- *         case POSIX_VIEW:      yield FileAttributeViewMetadata.POSIX;
- *         default:              throw Messages.fileSystemProvider().unsupportedFileAttributeView(viewName);
- *     };
+ *     FileAttributeViewMetadata view = views.getView(viewName);
  *     Set&lt;String&gt; attributeNames = getAttributeNames(attributes, view);
  *
  *     PosixFileAttributes fileAttributes = readAttributes(path, PosixFileAttributes.class, options);
@@ -113,7 +108,7 @@ import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Opera
  * </code></pre>
  *
  * <h2>Setting attributes</h2>
- * Methods in this class can be used to implement {@link FileSystemProvider#setAttribute(Path, String, Object, LinkOption...)} as follows, using
+ * Methods of this class can be used to implement {@link FileSystemProvider#setAttribute(Path, String, Object, LinkOption...)} as follows, using
  * constants from {@link FileAttributeConstants}:
  * <pre><code>
  * &#64;Override
@@ -153,9 +148,9 @@ import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Opera
  * </code></pre>
  *
  * <h3>Setting attributes during object creation</h3>
- * {@link #toAttributeMap(FileAttribute[], FileAttributeViewMetadata...)} and {@link #toAttributeMap(FileAttribute[], Collection)} can be used to
- * collect {@link FileAttribute} objects into maps where the key and value of each entry can be passed to any of the {@code setAttribute} methods of
- * this class. This allows file attributes to be set from methods like {@link FileSystemProvider#createDirectory(Path, FileAttribute...)} or
+ * The {@code toAttributeMap} methods of this class (also available through instances of {@link FileAttributeViewCollection}) can be used to collect
+ * {@link FileAttribute} objects into maps where the key and value of each entry can be passed to any of the {@code setAttribute} methods of this
+ * class. This allows file attributes to be set from methods like {@link FileSystemProvider#createDirectory(Path, FileAttribute...)} or
  * {@link FileSystemProvider#newByteChannel(Path, Set, FileAttribute...)}.
  *
  * @author Rob Spoor
@@ -522,6 +517,11 @@ public final class FileAttributeSupport {
 
         Map<String, FileAttributeViewMetadata> viewsByName = supportedViews.stream()
                 .collect(Collectors.toMap(FileAttributeViewMetadata::viewName, Function.identity()));
+        return toAttributeMap(attributes, viewsByName, nonSupportedAttributeNames);
+    }
+
+    static Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, Map<String, FileAttributeViewMetadata> supportedViews,
+            Collection<String> nonSupportedAttributeNames) {
 
         Map<String, Object> attributeMap = new HashMap<>();
         for (FileAttribute<?> attribute : attributes) {
@@ -529,7 +529,7 @@ public final class FileAttributeSupport {
             String viewName = getViewName(attributeName);
             attributeName = getAttributeName(attributeName);
 
-            FileAttributeViewMetadata view = viewsByName.get(viewName);
+            FileAttributeViewMetadata view = supportedViews.get(viewName);
             if (view == null) {
                 throw Messages.fileSystemProvider().unsupportedFileAttributeView(viewName);
             }
