@@ -148,8 +148,8 @@ class FileAttributeSupportTest {
             testWithSpecifiedAttributes("posix:size,isDirectory,owner", FileAttributeViewMetadata.POSIX, expected);
         }
 
-        private void testWithSpecifiedAttributes(String attributes, FileAttributeViewMetadata metadata, Set<String> expected) {
-            Set<String> attributeNames = getAttributeNames(attributes, metadata);
+        private void testWithSpecifiedAttributes(String attributes, FileAttributeViewMetadata view, Set<String> expected) {
+            Set<String> attributeNames = getAttributeNames(attributes, view);
 
             assertEquals(expected, attributeNames);
         }
@@ -169,10 +169,10 @@ class FileAttributeSupportTest {
             testWithWildCard("posix:*", FileAttributeViewMetadata.POSIX);
         }
 
-        private void testWithWildCard(String attributes, FileAttributeViewMetadata metadata) {
-            Set<String> expected = metadata.attributeNames(Operation.READ);
+        private void testWithWildCard(String attributes, FileAttributeViewMetadata view) {
+            Set<String> expected = view.attributeNames(Operation.READ);
 
-            Set<String> attributeNames = getAttributeNames(attributes, metadata);
+            Set<String> attributeNames = getAttributeNames(attributes, view);
 
             assertEquals(expected, attributeNames);
         }
@@ -192,37 +192,36 @@ class FileAttributeSupportTest {
             testWithWildCardAndSpecifiedAttributes("posix:size,*", FileAttributeViewMetadata.POSIX);
         }
 
-        private void testWithWildCardAndSpecifiedAttributes(String attributes, FileAttributeViewMetadata metadata) {
-            Set<String> expected = metadata.attributeNames(Operation.READ);
+        private void testWithWildCardAndSpecifiedAttributes(String attributes, FileAttributeViewMetadata view) {
+            Set<String> expected = view.attributeNames(Operation.READ);
 
-            Set<String> attributeNames = getAttributeNames(attributes, metadata);
+            Set<String> attributeNames = getAttributeNames(attributes, view);
 
             assertEquals(expected, attributeNames);
         }
 
         @ParameterizedTest(name = "{0}")
         @ValueSource(strings = { "size", "size,isDirectory", "*", "size,*" })
-        void testWithoutViewNameWithNonBasicMetadata(String attributes) {
-            testWithNonMatchingMetadata(attributes, FileAttributeViewMetadata.POSIX, "basic");
+        void testWithoutViewNameWithNonBasicView(String attributes) {
+            testWithNonMatchingView(attributes, FileAttributeViewMetadata.POSIX, "basic");
         }
 
         @ParameterizedTest(name = "{0}")
         @ValueSource(strings = { "basic:size", "basic:size,isDirectory", "basic:*", "basic:size,*" })
-        void testWithBasicViewNameWithNonBasicMetadata(String attributes) {
-            testWithNonMatchingMetadata(attributes, FileAttributeViewMetadata.POSIX, "basic");
+        void testWithBasicViewNameWithNonBasicView(String attributes) {
+            testWithNonMatchingView(attributes, FileAttributeViewMetadata.POSIX, "basic");
         }
 
         @ParameterizedTest(name = "{0}")
         @ValueSource(strings = { "posix:size", "posix:size,isDirectory,owner", "posix:*", "posix:size,*" })
-        void testWithPosixViewNameWithNonPosixMetadata(String attributes) {
-            testWithNonMatchingMetadata(attributes, FileAttributeViewMetadata.BASIC, "posix");
+        void testWithPosixViewNameWithNonPosixView(String attributes) {
+            testWithNonMatchingView(attributes, FileAttributeViewMetadata.BASIC, "posix");
         }
 
-        private void testWithNonMatchingMetadata(String attributes, FileAttributeViewMetadata nonMatchingMetadata, String expectedViewName) {
-
+        private void testWithNonMatchingView(String attributes, FileAttributeViewMetadata nonMatchingView, String expectedViewName) {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                    () -> getAttributeNames(attributes, nonMatchingMetadata));
-            assertEquals(AttributeMessages.FileAttributeViewMetadata.viewMismatch(nonMatchingMetadata.viewName(), expectedViewName),
+                    () -> getAttributeNames(attributes, nonMatchingView));
+            assertEquals(AttributeMessages.FileAttributeViewMetadata.viewMismatch(nonMatchingView.viewName(), expectedViewName),
                     exception.getMessage());
         }
 
@@ -241,8 +240,8 @@ class FileAttributeSupportTest {
             testWithUnsupportedAttributes("posix:size,isDirectory,owner,acl", FileAttributeViewMetadata.POSIX, "acl");
         }
 
-        private void testWithUnsupportedAttributes(String attributes, FileAttributeViewMetadata metadata, String unsupportedName) {
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> getAttributeNames(attributes, metadata));
+        private void testWithUnsupportedAttributes(String attributes, FileAttributeViewMetadata view, String unsupportedName) {
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> getAttributeNames(attributes, view));
             assertEquals(Messages.fileSystemProvider().unsupportedFileAttribute(unsupportedName).getMessage(), exception.getMessage());
         }
     }

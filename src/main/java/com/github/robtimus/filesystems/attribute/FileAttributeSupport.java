@@ -83,13 +83,13 @@ import com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.Opera
  * &#64;Override
  * public Map&lt;String, Object&gt; readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
  *     String viewName = getViewName(attributes);
- *     FileAttributeViewMetadata metadata = switch (viewName) {
+ *     FileAttributeViewMetadata view = switch (viewName) {
  *         case BASIC_VIEW:      yield FileAttributeViewMetadata.BASIC;
  *         case FILE_OWNER_VIEW: yield FileAttributeViewMetadata.FILE_OWNER;
  *         case POSIX_VIEW:      yield FileAttributeViewMetadata.POSIX;
  *         default:              throw Messages.fileSystemProvider().unsupportedFileAttributeView(viewName);
  *     };
- *     Set&lt;String&gt; attributeNames = getAttributeNames(attributes, metadata);
+ *     Set&lt;String&gt; attributeNames = getAttributeNames(attributes, view);
  *
  *     PosixFileAttributes fileAttributes = readAttributes(path, PosixFileAttributes.class, options);
  *
@@ -198,22 +198,22 @@ public final class FileAttributeSupport {
      * This string must be formatted as specified in {@link Files#readAttributes(Path, String, LinkOption...)}.
      *
      * @param attributes The string representing the attributes to read.
-     * @param metadata A {@link FileAttributeViewMetadata} object representing the view.
+     * @param view A {@link FileAttributeViewMetadata} object representing the view.
      * @return A set with the actual attribute names to read.
      * @throws NullPointerException If the given string or {@link FileAttributeViewMetadata} object is {@code null}.
      * @throws IllegalArgumentException If the string contains a view name that does not match the view name of the given
      *         {@link FileAttributeViewMetadata} object, or if any of the specified attributes to read is not supported by the view.
      */
-    public static Set<String> getAttributeNames(String attributes, FileAttributeViewMetadata metadata) {
+    public static Set<String> getAttributeNames(String attributes, FileAttributeViewMetadata view) {
         int indexOfColon = attributes.indexOf(':');
         if (indexOfColon == -1) {
-            validateViewName(BASIC_VIEW, metadata.viewName());
+            validateViewName(BASIC_VIEW, view.viewName());
         } else {
-            validateViewName(attributes.substring(0, indexOfColon), metadata.viewName());
+            validateViewName(attributes.substring(0, indexOfColon), view.viewName());
             attributes = attributes.substring(indexOfColon + 1);
         }
 
-        Set<String> allowedAttributes = metadata.attributeNames(Operation.READ);
+        Set<String> allowedAttributes = view.attributeNames(Operation.READ);
 
         Set<String> result = new HashSet<>(allowedAttributes.size());
         for (String attribute : attributes.split(",")) { //$NON-NLS-1$
@@ -520,7 +520,7 @@ public final class FileAttributeSupport {
     public static Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, Collection<FileAttributeViewMetadata> supportedViews,
             Collection<String> nonSupportedAttributeNames) {
 
-        Map<String, FileAttributeViewMetadata> metadataByName = supportedViews.stream()
+        Map<String, FileAttributeViewMetadata> viewsByName = supportedViews.stream()
                 .collect(Collectors.toMap(FileAttributeViewMetadata::viewName, Function.identity()));
 
         Map<String, Object> attributeMap = new HashMap<>();
@@ -529,17 +529,17 @@ public final class FileAttributeSupport {
             String viewName = getViewName(attributeName);
             attributeName = getAttributeName(attributeName);
 
-            FileAttributeViewMetadata metadata = metadataByName.get(viewName);
-            if (metadata == null) {
+            FileAttributeViewMetadata view = viewsByName.get(viewName);
+            if (view == null) {
                 throw Messages.fileSystemProvider().unsupportedFileAttributeView(viewName);
             }
 
-            if (!metadata.supportsAttribute(attributeName, Operation.WRITE) || nonSupportedAttributeNames.contains(attributeName)) {
+            if (!view.supportsAttribute(attributeName, Operation.WRITE) || nonSupportedAttributeNames.contains(attributeName)) {
                 throw Messages.fileSystemProvider().unsupportedCreateFileAttribute(attribute.name());
             }
 
             Object attributeValue = attribute.value();
-            if (!isInstance(attributeValue, metadata.attributeType(attributeName))) {
+            if (!isInstance(attributeValue, view.attributeType(attributeName))) {
                 throw Messages.fileSystemProvider().unsupportedCreateFileAttributeValue(attribute.name(), attribute.value());
             }
 

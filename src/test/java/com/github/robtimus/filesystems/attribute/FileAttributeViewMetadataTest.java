@@ -365,12 +365,12 @@ class FileAttributeViewMetadataTest {
     @TestInstance(Lifecycle.PER_CLASS)
     abstract static class MetadataTest {
 
-        private final FileAttributeViewMetadata metadata;
+        private final FileAttributeViewMetadata view;
         private final Class<? extends FileAttributeView> expectedViewType;
         private final String expectedViewName;
 
-        MetadataTest(FileAttributeViewMetadata metadata, Class<? extends FileAttributeView> expectedViewType, String expectedViewName) {
-            this.metadata = metadata;
+        MetadataTest(FileAttributeViewMetadata view, Class<? extends FileAttributeView> expectedViewType, String expectedViewName) {
+            this.view = view;
             this.expectedViewType = expectedViewType;
             this.expectedViewName = expectedViewName;
         }
@@ -383,33 +383,33 @@ class FileAttributeViewMetadataTest {
 
         @Test
         void testViewType() {
-            assertEquals(expectedViewType, metadata.viewType());
+            assertEquals(expectedViewType, view.viewType());
         }
 
         @Test
         void testViewName() {
-            assertEquals(expectedViewName, metadata.viewName());
+            assertEquals(expectedViewName, view.viewName());
         }
 
         @Test
         void testAttributeNames() {
-            assertEquals(expectedAttributes().keySet(), metadata.attributeNames());
+            assertEquals(expectedAttributes().keySet(), view.attributeNames());
         }
 
         @Test
         void testReadableAttributeNames() {
-            assertEquals(expectedReadableAttributeNames(), metadata.attributeNames(Operation.READ));
+            assertEquals(expectedReadableAttributeNames(), view.attributeNames(Operation.READ));
         }
 
         @Test
         void testWritableAttributeNames() {
-            assertEquals(expectedWritableAttributeNames(), metadata.attributeNames(Operation.WRITE));
+            assertEquals(expectedWritableAttributeNames(), view.attributeNames(Operation.WRITE));
         }
 
         @ParameterizedTest(name = "{0}")
         @MethodSource("attributeTypeArguments")
         void testAttributeType(String attributeName, Type expectedAttributeType) {
-            Type attributeType = metadata.attributeType(attributeName);
+            Type attributeType = view.attributeType(attributeName);
             assertEquals(expectedAttributeType, attributeType);
             if (attributeType instanceof ParameterizedType) {
                 testParameterizedType(attributeName, (ParameterizedType) attributeType);
@@ -428,14 +428,14 @@ class FileAttributeViewMetadataTest {
         @ParameterizedTest(name = "{0}")
         @MethodSource("notSupportedAttributeNames")
         void testAttributeTypeNotSupported(String attributeName) {
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> metadata.attributeType(attributeName));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> view.attributeType(attributeName));
             assertEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName).getMessage(), exception.getMessage());
         }
 
         @ParameterizedTest(name = "{0}")
         @MethodSource("supportsAttributeArguments")
         void testSupportsAttribute(String attributeName) {
-            assertTrue(metadata.supportsAttribute(attributeName));
+            assertTrue(view.supportsAttribute(attributeName));
         }
 
         Stream<Arguments> supportsAttributeArguments() {
@@ -446,13 +446,13 @@ class FileAttributeViewMetadataTest {
         @ParameterizedTest(name = "{0}")
         @MethodSource("notSupportedAttributeNames")
         void testSupportsAttributeNotSupported(String attributeName) {
-            assertFalse(metadata.supportsAttribute(attributeName));
+            assertFalse(view.supportsAttribute(attributeName));
         }
 
         @ParameterizedTest(name = "{0}")
         @MethodSource("supportsReadableAttributeArguments")
         void testSupportsReadableAttribute(String attributeName) {
-            assertTrue(metadata.supportsAttribute(attributeName, Operation.READ));
+            assertTrue(view.supportsAttribute(attributeName, Operation.READ));
         }
 
         Stream<Arguments> supportsReadableAttributeArguments() {
@@ -463,7 +463,7 @@ class FileAttributeViewMetadataTest {
         @ParameterizedTest(name = "{0}")
         @MethodSource("notSupportedReadableAttributeNames")
         void testSupportsReadableAttributeNotSupported(String attributeName) {
-            assertFalse(metadata.supportsAttribute(attributeName, Operation.READ));
+            assertFalse(view.supportsAttribute(attributeName, Operation.READ));
         }
 
         Stream<Arguments> notSupportedReadableAttributeNames() {
@@ -476,7 +476,7 @@ class FileAttributeViewMetadataTest {
         @ParameterizedTest(name = "{0}")
         @MethodSource("supportsWritableAttributeArguments")
         void testSupportsWritableAttribute(String attributeName) {
-            assertTrue(metadata.supportsAttribute(attributeName, Operation.WRITE));
+            assertTrue(view.supportsAttribute(attributeName, Operation.WRITE));
         }
 
         Stream<Arguments> supportsWritableAttributeArguments() {
@@ -487,7 +487,7 @@ class FileAttributeViewMetadataTest {
         @ParameterizedTest(name = "{0}")
         @MethodSource("notSupportedWritableAttributeNames")
         void testSupportsWritableAttributeNotSupported(String attributeName) {
-            assertFalse(metadata.supportsAttribute(attributeName, Operation.WRITE));
+            assertFalse(view.supportsAttribute(attributeName, Operation.WRITE));
         }
 
         Stream<Arguments> notSupportedWritableAttributeNames() {

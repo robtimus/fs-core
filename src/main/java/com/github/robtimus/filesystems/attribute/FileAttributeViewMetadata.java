@@ -57,7 +57,7 @@ import java.util.Set;
 import com.github.robtimus.filesystems.Messages;
 
 /**
- * A class that represents metadata of a {@link FileAttributeView} interface.
+ * A class that represents metadata of a {@link FileAttributeView} interface. Instances of this class are immutable.
  *
  * @author Rob Spoor
  * @since 2.2
@@ -361,18 +361,18 @@ public final class FileAttributeViewMetadata {
          * Adds all attributes of another {@link FileAttributeViewMetadata} object.
          * This can be used when one {@link FileAttributeView} interface extends from another.
          *
-         * @param metadata The {@link FileAttributeViewMetadata} object to add all attributes of.
+         * @param view The {@link FileAttributeViewMetadata} object to add all attributes of.
          * @return This object.
          * @throws NullPointerException If the given {@link FileAttributeViewMetadata} object is {@code null}.
          */
-        public Builder withAttributes(FileAttributeViewMetadata metadata) {
-            attributes.putAll(metadata.attributes);
+        public Builder withAttributes(FileAttributeViewMetadata view) {
+            attributes.putAll(view.attributes);
             // For readable and writable attributes, remove all of the metadata's supported attributes, then add as readable / writable as needed
-            Set<String> allAttributes = metadata.attributes.keySet();
+            Set<String> allAttributes = view.attributes.keySet();
             readableAttributeNames.removeAll(allAttributes);
             writableAttributeNames.removeAll(allAttributes);
-            readableAttributeNames.addAll(metadata.readableAttributeNames);
-            writableAttributeNames.addAll(metadata.writableAttributeNames);
+            readableAttributeNames.addAll(view.readableAttributeNames);
+            writableAttributeNames.addAll(view.writableAttributeNames);
             return this;
         }
 
