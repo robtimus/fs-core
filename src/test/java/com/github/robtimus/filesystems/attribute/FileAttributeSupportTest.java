@@ -1403,6 +1403,99 @@ class FileAttributeSupportTest {
             assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttributeValue("posix:owner", FileTime.fromMillis(0)).getMessage(),
                     exception.getMessage());
         }
+
+        @Nested
+        class WithFileAttributeViewCollection {
+
+            @Test
+            void testWithSupportedAttributes() {
+                FileAttribute<?>[] attributes = {
+                        new SimpleFileAttribute<>("lastModifiedTime", FileTime.fromMillis(0)),
+                        new SimpleFileAttribute<>("basic:lastAccessTime", FileTime.fromMillis(Long.MAX_VALUE)),
+                        new SimpleFileAttribute<>("posix:owner", new SimpleUserPrincipal("test")),
+                };
+
+                FileAttributeViewCollection views = FileAttributeViewCollection.withViews(FileAttributeViewMetadata.BASIC,
+                        FileAttributeViewMetadata.POSIX);
+
+                Map<String, Object> attributeMap = toAttributeMap(attributes, views);
+
+                Map<String, Object> expected = new HashMap<>();
+                expected.put("basic:lastModifiedTime", FileTime.fromMillis(0));
+                expected.put("basic:lastAccessTime", FileTime.fromMillis(Long.MAX_VALUE));
+                expected.put("posix:owner", new SimpleUserPrincipal("test"));
+
+                assertEquals(expected, attributeMap);
+
+                attributeMap = toAttributeMap(attributes, views, "acl");
+
+                assertEquals(expected, attributeMap);
+            }
+
+            @Test
+            void testWithUnsupportedAttributeView() {
+                FileAttribute<?>[] attributes = {
+                        new SimpleFileAttribute<>("lastModifiedTime", FileTime.fromMillis(0)),
+                        new SimpleFileAttribute<>("basic:lastAccessTime", FileTime.fromMillis(Long.MAX_VALUE)),
+                        new SimpleFileAttribute<>("posix:owner", new SimpleUserPrincipal("test")),
+                };
+
+                FileAttributeViewCollection views = FileAttributeViewCollection.withViews(FileAttributeViewMetadata.BASIC);
+
+                UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> toAttributeMap(attributes, views));
+                assertEquals(Messages.fileSystemProvider().unsupportedFileAttributeView("posix").getMessage(), exception.getMessage());
+            }
+
+            @ParameterizedTest(name = "{0}")
+            @ValueSource(strings = { "owner", "basic:owner", "posix:acl" })
+            void testWithUnsupportedAttribute(String attributeName) {
+                FileAttribute<?>[] attributes = {
+                        new SimpleFileAttribute<>("lastModifiedTime", FileTime.fromMillis(0)),
+                        new SimpleFileAttribute<>("basic:lastAccessTime", FileTime.fromMillis(Long.MAX_VALUE)),
+                        new SimpleFileAttribute<>(attributeName, new SimpleUserPrincipal("test")),
+                };
+
+                FileAttributeViewCollection views = FileAttributeViewCollection.withViews(FileAttributeViewMetadata.BASIC,
+                        FileAttributeViewMetadata.POSIX);
+
+                UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> toAttributeMap(attributes, views));
+                assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute(attributeName).getMessage(), exception.getMessage());
+            }
+
+            @Test
+            void testWithDisallowedAttribute() {
+                FileAttribute<?>[] attributes = {
+                        new SimpleFileAttribute<>("lastModifiedTime", FileTime.fromMillis(0)),
+                        new SimpleFileAttribute<>("basic:lastAccessTime", FileTime.fromMillis(Long.MAX_VALUE)),
+                        new SimpleFileAttribute<>("posix:owner", new SimpleUserPrincipal("test")),
+                };
+
+                FileAttributeViewCollection views = FileAttributeViewCollection.withViews(FileAttributeViewMetadata.BASIC,
+                        FileAttributeViewMetadata.POSIX);
+
+                UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
+                        () -> toAttributeMap(attributes, views, "lastAccessTime"));
+                assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute("basic:lastAccessTime").getMessage(),
+                        exception.getMessage());
+            }
+
+            @Test
+            void testWithUnsupportedAttributeValue() {
+                FileAttribute<?>[] attributes = {
+                        new SimpleFileAttribute<>("lastModifiedTime", FileTime.fromMillis(0)),
+                        new SimpleFileAttribute<>("basic:lastAccessTime", FileTime.fromMillis(Long.MAX_VALUE)),
+                        new SimpleFileAttribute<>("posix:permissions", EnumSet.of(PosixFilePermission.OWNER_READ)),
+                        new SimpleFileAttribute<>("posix:owner", FileTime.fromMillis(0)),
+                };
+
+                FileAttributeViewCollection views = FileAttributeViewCollection.withViews(FileAttributeViewMetadata.BASIC,
+                        FileAttributeViewMetadata.POSIX);
+
+                UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> toAttributeMap(attributes, views));
+                assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttributeValue("posix:owner", FileTime.fromMillis(0)).getMessage(),
+                        exception.getMessage());
+            }
+        }
     }
 
     @Nested

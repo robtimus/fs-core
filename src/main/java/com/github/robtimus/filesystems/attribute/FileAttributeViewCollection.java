@@ -19,11 +19,9 @@ package com.github.robtimus.filesystems.attribute;
 
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
-import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +55,10 @@ public final class FileAttributeViewCollection {
      */
     public static FileAttributeViewCollection withViews(FileAttributeViewMetadata... views) {
         return new FileAttributeViewCollection(views);
+    }
+
+    Map<String, FileAttributeViewMetadata> views() {
+        return views;
     }
 
     /**
@@ -106,62 +108,5 @@ public final class FileAttributeViewCollection {
             throw Messages.fileSystemProvider().unsupportedFileAttributeView(name);
         }
         return view;
-    }
-
-    /**
-     * Collects several {@link FileAttribute} objects into a map.
-     * This method is a wrapper around {@link FileAttributeSupport#toAttributeMap(FileAttribute[], Collection)}, using the views contained in this
-     * collection.
-     *
-     * @param attributes The {@link FileAttribute} objects to collect.
-     * @return A map where each key is the name of a given {@link FileAttribute} object, prefixed with the matching view name where needed.
-     * @throws NullPointerException If any of the given {@link FileAttribute} objects is {@code null}.
-     * @throws UnsupportedOperationException If any of the given {@link FileAttribute} objects refers to a view that is not referred to by any of the
-     *                                           given supported {@link FileAttributeViewMetadata} objects, or has a non-supported name,
-     *                                           or has a value that does not match the
-     *                                           {@link FileAttributeViewMetadata#attributeType(String) expected type}.
-     */
-    public Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes) {
-        return toAttributeMap(attributes, Collections.emptySet());
-    }
-
-    /**
-     * Collects several {@link FileAttribute} objects into a map.
-     * This method is a wrapper around {@link FileAttributeSupport#toAttributeMap(FileAttribute[], Collection, String...)}, using the views contained
-     * in this collection.
-     *
-     * @param attributes The {@link FileAttribute} objects to collect.
-     * @param nonSupportedAttributeNames A collection of attribute names that are not supported, regardless of what the supported views say.
-     *                                       This can be used for attributes that cannot be set during creation but only afterwards.
-     *                                       Elements should not be prefixed with view names.
-     * @return A map where each key is the name of a given {@link FileAttribute} object, prefixed with the matching view name where needed.
-     * @throws NullPointerException If any of the given {@link FileAttribute} objects is {@code null}.
-     * @throws UnsupportedOperationException If any of the given {@link FileAttribute} objects refers to a view that is not referred to by any of the
-     *                                           given supported {@link FileAttributeViewMetadata} objects, or has a non-supported name,
-     *                                           or has a value that does not match the
-     *                                           {@link FileAttributeViewMetadata#attributeType(String) expected type}.
-     */
-    public Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, String... nonSupportedAttributeNames) {
-        return toAttributeMap(attributes, Arrays.asList(nonSupportedAttributeNames));
-    }
-
-    /**
-     * Collects several {@link FileAttribute} objects into a map.
-     * This method is a wrapper around {@link FileAttributeSupport#toAttributeMap(FileAttribute[], Collection, Collection)}, using the views contained
-     * in this collection.
-     *
-     * @param attributes The {@link FileAttribute} objects to collect.
-     * @param nonSupportedAttributeNames A collection of attribute names that are not supported, regardless of what the supported views say.
-     *                                       This can be used for attributes that cannot be set during creation but only afterwards.
-     *                                       Elements should not be prefixed with view names.
-     * @return A map where each key is the name of a given {@link FileAttribute} object, prefixed with the matching view name where needed.
-     * @throws NullPointerException If any of the given {@link FileAttribute} objects is {@code null}.
-     * @throws UnsupportedOperationException If any of the given {@link FileAttribute} objects refers to a view that is not referred to by any of the
-     *                                           given supported {@link FileAttributeViewMetadata} objects, or has a non-supported name,
-     *                                           or has a value that does not match the
-     *                                           {@link FileAttributeViewMetadata#attributeType(String) expected type}.
-     */
-    public Map<String, Object> toAttributeMap(FileAttribute<?>[] attributes, Collection<String> nonSupportedAttributeNames) {
-        return FileAttributeSupport.toAttributeMap(attributes, views, nonSupportedAttributeNames);
     }
 }
