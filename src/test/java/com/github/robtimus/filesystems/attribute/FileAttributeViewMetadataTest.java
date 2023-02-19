@@ -504,6 +504,11 @@ class FileAttributeViewMetadataTest {
                     .map(Arguments::arguments);
         }
 
+        @Test
+        void testToString() {
+            assertEquals(expectedViewName, view.toString());
+        }
+
         private static Stream<String> allAttributes() {
             return Arrays.stream(FileAttributeConstants.class.getFields())
                     .filter(field -> field.getType() == String.class)

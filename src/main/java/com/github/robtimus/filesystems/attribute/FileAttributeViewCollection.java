@@ -109,4 +109,9 @@ public final class FileAttributeViewCollection {
         }
         return view;
     }
+
+    @Override
+    public String toString() {
+        return views.keySet().toString();
+    }
 }

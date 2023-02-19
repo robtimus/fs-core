@@ -115,4 +115,9 @@ class FileAttributeViewCollectionTest {
             assertEquals(Messages.fileSystemProvider().unsupportedFileAttributeView(name).getMessage(), exception.getMessage());
         }
     }
+
+    @Test
+    void testToString() {
+        assertEquals(views.viewNames().toString(), views.toString());
+    }
 }

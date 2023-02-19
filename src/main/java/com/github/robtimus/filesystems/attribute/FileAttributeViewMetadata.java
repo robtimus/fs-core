@@ -202,6 +202,11 @@ public final class FileAttributeViewMetadata {
         return attributeNames(operation).contains(attributeName);
     }
 
+    @Override
+    public String toString() {
+        return viewName;
+    }
+
     /**
      * Creates a builder for {@link FileAttributeViewMetadata} objects.
      *
