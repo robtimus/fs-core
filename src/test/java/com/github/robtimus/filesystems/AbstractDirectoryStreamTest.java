@@ -17,6 +17,7 @@
 
 package com.github.robtimus.filesystems;
 
+import static com.github.robtimus.junit.support.ThrowableAssertions.assertChainEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -117,7 +118,7 @@ class AbstractDirectoryStreamTest {
         try (DirectoryStream<Path> stream = new TestDirectoryStream(0, entry -> true)) {
             stream.close();
             IllegalStateException exception = assertThrows(IllegalStateException.class, stream::iterator);
-            assertEquals(Messages.directoryStream().closed().getMessage(), exception.getMessage());
+            assertChainEquals(Messages.directoryStream().closed(), exception);
         }
     }
 
@@ -126,7 +127,7 @@ class AbstractDirectoryStreamTest {
         try (DirectoryStream<Path> stream = new TestDirectoryStream(0, entry -> true)) {
             stream.iterator();
             IllegalStateException exception = assertThrows(IllegalStateException.class, stream::iterator);
-            assertEquals(Messages.directoryStream().iteratorAlreadyReturned().getMessage(), exception.getMessage());
+            assertChainEquals(Messages.directoryStream().iteratorAlreadyReturned(), exception);
         }
     }
 

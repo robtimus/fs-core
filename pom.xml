@@ -61,6 +61,10 @@
     <url>https://github.com/robtimus/fs-core/issues</url>
   </issueManagement>
 
+  <properties>
+    <version.junit-support>2.2</version.junit-support>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -77,6 +81,13 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.robtimus</groupId>
+      <artifactId>junit-support</artifactId>
+      <version>${version.junit-support}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

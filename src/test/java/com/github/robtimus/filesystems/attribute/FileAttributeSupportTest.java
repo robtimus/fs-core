@@ -25,6 +25,7 @@ import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.isI
 import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.populateAttributeMap;
 import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.setAttribute;
 import static com.github.robtimus.filesystems.attribute.FileAttributeSupport.toAttributeMap;
+import static com.github.robtimus.junit.support.ThrowableAssertions.assertChainEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -242,7 +243,7 @@ class FileAttributeSupportTest {
 
         private void testWithUnsupportedAttributes(String attributes, FileAttributeViewMetadata view, String unsupportedName) {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> getAttributeNames(attributes, view));
-            assertEquals(Messages.fileSystemProvider().unsupportedFileAttribute(unsupportedName).getMessage(), exception.getMessage());
+            assertChainEquals(Messages.fileSystemProvider().unsupportedFileAttribute(unsupportedName), exception);
         }
     }
 
@@ -1097,7 +1098,7 @@ class FileAttributeSupportTest {
                 BasicFileAttributeView view = mock(BasicFileAttributeView.class);
 
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> setAttribute(attributeName, "foo", view));
-                assertEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName).getMessage(), exception.getMessage());
+                assertChainEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName), exception);
 
                 verifyNoInteractions(view);
             }
@@ -1123,7 +1124,7 @@ class FileAttributeSupportTest {
                 FileOwnerAttributeView view = mock(FileOwnerAttributeView.class);
 
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> setAttribute(attributeName, "foo", view));
-                assertEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName).getMessage(), exception.getMessage());
+                assertChainEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName), exception);
 
                 verifyNoInteractions(view);
             }
@@ -1191,7 +1192,7 @@ class FileAttributeSupportTest {
                 DosFileAttributeView view = mock(DosFileAttributeView.class);
 
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> setAttribute(attributeName, "foo", view));
-                assertEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName).getMessage(), exception.getMessage());
+                assertChainEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName), exception);
 
                 verifyNoInteractions(view);
             }
@@ -1271,7 +1272,7 @@ class FileAttributeSupportTest {
                 PosixFileAttributeView view = mock(PosixFileAttributeView.class);
 
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> setAttribute(attributeName, "foo", view));
-                assertEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName).getMessage(), exception.getMessage());
+                assertChainEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName), exception);
 
                 verifyNoInteractions(view);
             }
@@ -1316,7 +1317,7 @@ class FileAttributeSupportTest {
                 AclFileAttributeView view = mock(AclFileAttributeView.class);
 
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> setAttribute(attributeName, "foo", view));
-                assertEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName).getMessage(), exception.getMessage());
+                assertChainEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName), exception);
 
                 verifyNoInteractions(view);
             }
@@ -1358,7 +1359,7 @@ class FileAttributeSupportTest {
 
             UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
                     () -> toAttributeMap(attributes, FileAttributeViewMetadata.BASIC));
-            assertEquals(Messages.fileSystemProvider().unsupportedFileAttributeView("posix").getMessage(), exception.getMessage());
+            assertChainEquals(Messages.fileSystemProvider().unsupportedFileAttributeView("posix"), exception);
         }
 
         @ParameterizedTest(name = "{0}")
@@ -1372,7 +1373,7 @@ class FileAttributeSupportTest {
 
             UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
                     () -> toAttributeMap(attributes, FileAttributeViewMetadata.BASIC, FileAttributeViewMetadata.POSIX));
-            assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute(attributeName).getMessage(), exception.getMessage());
+            assertChainEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute(attributeName), exception);
         }
 
         @Test
@@ -1386,7 +1387,7 @@ class FileAttributeSupportTest {
 
             UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
                     () -> toAttributeMap(attributes, views, "lastAccessTime"));
-            assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute("basic:lastAccessTime").getMessage(), exception.getMessage());
+            assertChainEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute("basic:lastAccessTime"), exception);
         }
 
         @Test
@@ -1400,8 +1401,7 @@ class FileAttributeSupportTest {
 
             UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
                     () -> toAttributeMap(attributes, FileAttributeViewMetadata.BASIC, FileAttributeViewMetadata.POSIX));
-            assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttributeValue("posix:owner", FileTime.fromMillis(0)).getMessage(),
-                    exception.getMessage());
+            assertChainEquals(Messages.fileSystemProvider().unsupportedCreateFileAttributeValue("posix:owner", FileTime.fromMillis(0)), exception);
         }
 
         @Nested
@@ -1443,7 +1443,7 @@ class FileAttributeSupportTest {
                 FileAttributeViewCollection views = FileAttributeViewCollection.withViews(FileAttributeViewMetadata.BASIC);
 
                 UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> toAttributeMap(attributes, views));
-                assertEquals(Messages.fileSystemProvider().unsupportedFileAttributeView("posix").getMessage(), exception.getMessage());
+                assertChainEquals(Messages.fileSystemProvider().unsupportedFileAttributeView("posix"), exception);
             }
 
             @ParameterizedTest(name = "{0}")
@@ -1459,7 +1459,7 @@ class FileAttributeSupportTest {
                         FileAttributeViewMetadata.POSIX);
 
                 UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> toAttributeMap(attributes, views));
-                assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute(attributeName).getMessage(), exception.getMessage());
+                assertChainEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute(attributeName), exception);
             }
 
             @Test
@@ -1475,8 +1475,7 @@ class FileAttributeSupportTest {
 
                 UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
                         () -> toAttributeMap(attributes, views, "lastAccessTime"));
-                assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute("basic:lastAccessTime").getMessage(),
-                        exception.getMessage());
+                assertChainEquals(Messages.fileSystemProvider().unsupportedCreateFileAttribute("basic:lastAccessTime"), exception);
             }
 
             @Test
@@ -1492,8 +1491,8 @@ class FileAttributeSupportTest {
                         FileAttributeViewMetadata.POSIX);
 
                 UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> toAttributeMap(attributes, views));
-                assertEquals(Messages.fileSystemProvider().unsupportedCreateFileAttributeValue("posix:owner", FileTime.fromMillis(0)).getMessage(),
-                        exception.getMessage());
+                assertChainEquals(Messages.fileSystemProvider().unsupportedCreateFileAttributeValue("posix:owner", FileTime.fromMillis(0)),
+                        exception);
             }
         }
     }

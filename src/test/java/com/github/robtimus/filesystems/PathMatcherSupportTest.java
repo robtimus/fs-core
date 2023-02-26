@@ -17,6 +17,7 @@
 
 package com.github.robtimus.filesystems;
 
+import static com.github.robtimus.junit.support.ThrowableAssertions.assertChainEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,13 +39,13 @@ class PathMatcherSupportTest {
     @Test
     void testToPatternNoSyntax() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> PathMatcherSupport.toPattern(".*"));
-        assertEquals(Messages.pathMatcher().syntaxNotFound(".*").getMessage(), exception.getMessage());
+        assertChainEquals(Messages.pathMatcher().syntaxNotFound(".*"), exception);
     }
 
     @Test
     void testToPatternInvalidSyntax() {
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> PathMatcherSupport.toPattern("java:.*"));
-        assertEquals(Messages.pathMatcher().unsupportedPathMatcherSyntax("java").getMessage(), exception.getMessage());
+        assertChainEquals(Messages.pathMatcher().unsupportedPathMatcherSyntax("java"), exception);
     }
 
     @Test

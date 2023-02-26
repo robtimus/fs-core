@@ -17,6 +17,7 @@
 
 package com.github.robtimus.filesystems;
 
+import static com.github.robtimus.junit.support.ThrowableAssertions.assertChainEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.HashMap;
@@ -702,11 +703,11 @@ class FileSystemProviderSupportTest {
 
     private static void assertMissingPropertyException(IllegalArgumentException exception, String property) {
         IllegalArgumentException expected = Messages.fileSystemProvider().env().missingProperty(property);
-        assertEquals(expected.getMessage(), exception.getMessage());
+        assertChainEquals(expected, exception);
     }
 
     private static void assertInvalidPropertyException(IllegalArgumentException exception, String property, Object value) {
         IllegalArgumentException expected = Messages.fileSystemProvider().env().invalidProperty(property, value);
-        assertEquals(expected.getMessage(), exception.getMessage());
+        assertChainEquals(expected, exception);
     }
 }

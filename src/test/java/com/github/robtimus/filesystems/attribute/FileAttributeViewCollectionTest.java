@@ -25,6 +25,7 @@ import static com.github.robtimus.filesystems.attribute.FileAttributeConstants.P
 import static com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.BASIC;
 import static com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.FILE_OWNER;
 import static com.github.robtimus.filesystems.attribute.FileAttributeViewMetadata.POSIX;
+import static com.github.robtimus.junit.support.ThrowableAssertions.assertChainEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -112,7 +113,7 @@ class FileAttributeViewCollectionTest {
         @ValueSource(strings = { DOS_VIEW, ACL_VIEW })
         void testUnsupportedView(String name) {
             UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> views.getView(name));
-            assertEquals(Messages.fileSystemProvider().unsupportedFileAttributeView(name).getMessage(), exception.getMessage());
+            assertChainEquals(Messages.fileSystemProvider().unsupportedFileAttributeView(name), exception);
         }
     }
 

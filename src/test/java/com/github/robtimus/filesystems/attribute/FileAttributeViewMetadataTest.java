@@ -17,6 +17,7 @@
 
 package com.github.robtimus.filesystems.attribute;
 
+import static com.github.robtimus.junit.support.ThrowableAssertions.assertChainEquals;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -429,7 +430,7 @@ class FileAttributeViewMetadataTest {
         @MethodSource("notSupportedAttributeNames")
         void testAttributeTypeNotSupported(String attributeName) {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> view.attributeType(attributeName));
-            assertEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName).getMessage(), exception.getMessage());
+            assertChainEquals(Messages.fileSystemProvider().unsupportedFileAttribute(attributeName), exception);
         }
 
         @ParameterizedTest(name = "{0}")
