@@ -154,6 +154,132 @@ class FileSystemMapTest {
     }
 
     @Nested
+    @DisplayName("addIfNotExists")
+    class AddIfNotExists {
+
+        @Test
+        @DisplayName("null URI")
+        void testNullURI() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            Map<String, ?> env = Collections.emptyMap();
+
+            assertThrows(NullPointerException.class, () -> map.addIfNotExists(null, env));
+        }
+
+        @Test
+        @DisplayName("null env")
+        void testNullEnv() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            URI uri = URI.create("urn:test");
+
+            assertThrows(NullPointerException.class, () -> map.addIfNotExists(uri, null));
+        }
+
+        @Test
+        @DisplayName("file system already added")
+        void testFileSystemAlreadyAdded() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            @SuppressWarnings("resource")
+            FileSystem added = assertDoesNotThrow(() -> map.addIfNotExists(uri, env));
+
+            assertSame(fileSystem, added);
+
+            @SuppressWarnings("resource")
+            FileSystem existing = assertDoesNotThrow(() -> map.addIfNotExists(uri, env));
+
+            assertSame(fileSystem, existing);
+        }
+
+        @Test
+        @DisplayName("file system being added")
+        void testFileSystemBeingAdded() {
+            CountDownLatch createStarted = new CountDownLatch(1);
+            CountDownLatch createEnd = new CountDownLatch(1);
+
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                createStarted.countDown();
+                await(createEnd);
+                return fileSystem;
+            });
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            executor.submit(() -> map.add(uri, env));
+
+            assertTrue(assertDoesNotThrow(() -> createStarted.await(100, TimeUnit.MILLISECONDS)));
+
+            executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
+
+            @SuppressWarnings("resource")
+            FileSystem existing = assertDoesNotThrow(() -> map.addIfNotExists(uri, env));
+
+            assertSame(fileSystem, existing);
+        }
+
+        @Test
+        @DisplayName("factory throws exception")
+        void testFactoryThrowsException() {
+            IOException exception = new IOException();
+
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                throw exception;
+            });
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            IOException thrown = assertThrows(IOException.class, () -> map.addIfNotExists(uri, env));
+            assertSame(exception, thrown);
+
+            // Assert that the URI is usable again
+            thrown = assertThrows(IOException.class, () -> map.addIfNotExists(uri, env));
+            assertSame(exception, thrown);
+        }
+
+        @Test
+        @DisplayName("file system being added")
+        void testFactoryThrowsExceptionConcurrently() {
+            CountDownLatch createStarted = new CountDownLatch(1);
+            CountDownLatch createEnd = new CountDownLatch(1);
+
+            IOException exception = new IOException();
+
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                createStarted.countDown();
+                await(createEnd);
+                throw exception;
+            });
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            executor.submit(() -> map.add(uri, env));
+
+            assertTrue(assertDoesNotThrow(() -> createStarted.await(100, TimeUnit.MILLISECONDS)));
+
+            executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
+
+            IOException thrown = assertThrows(IOException.class, () -> map.addIfNotExists(uri, env));
+
+            assertSame(exception, thrown);
+        }
+    }
+
+    @Nested
     @DisplayName("get")
     class Get {
 

@@ -35,13 +35,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * A map for file systems that can be used by {@link FileSystemProvider} implementations.
  * This class provides a thread-safe way to add, retrieve and remove file systems without any unnecessary locking during the actual creation of file
- * systems, which may take a while. It does so by maintaining a lock per URI; calling {@link #get(URI)} or {@link #remove(URI)} while a file system
- * is still being created will block until the creation is done (or has failed). However, any call with a different URI will not block until the file
- * system is created.
+ * systems, which may take a while. It does so by maintaining a lock per URI; calling {@link #addIfNotExists(URI, Map)} , {@link #get(URI)} or
+ * {@link #remove(URI)} while a file system is still being created will block until the creation is done (or has failed). However, any call with a
+ * different URI will not block until the file system is created.
  * <p>
- * The {@link #add(URI, Map)}, {@link #get(URI)} and {@link #remove(URI)} methods all require the same URI to be used. While that is often
- * automatically the case for adding and removing file systems from {@link FileSystemProvider#newFileSystem(URI, Map)} and {@link FileSystem#close()}
- * respectively, and usually also for retrieving file systems from {@link FileSystemProvider#getFileSystem(URI)},
+ * The {@link #add(URI, Map)}, {@link #addIfNotExists(URI, Map)}, {@link #get(URI)} and {@link #remove(URI)} methods all require the same URI to be
+ * used. While that is often automatically the case for adding and removing file systems from {@link FileSystemProvider#newFileSystem(URI, Map)} and
+ * {@link FileSystem#close()} respectively, and usually also for retrieving file systems from {@link FileSystemProvider#getFileSystem(URI)},
  * {@link FileSystemProvider#getPath(URI)} often needs some conversion or normalization, as it allows sub paths. This class does not enforce any
  * conversion or normalization; however, it does provide access to the currently registered URIs through {@link #uris()}. That returns a
  * {@link NavigableSet}, which allows a closest match to be easily found for a URI.
@@ -86,9 +86,9 @@ public final class FileSystemMap<S extends FileSystem> {
     }
 
     /**
-     * Adds a new file system. It is created using the factory provided in the constructor.
+     * Adds a new file system for a URI. It is created using the factory provided in the constructor.
      *
-     * @param uri The URI representing the file system.
+     * @param uri The URI for which to add a new file system.
      * @param env A map of provider specific properties to configure the file system.
      * @return The new file system.
      * @throws NullPointerException If the given URI or map is {@code null}.
@@ -110,6 +110,73 @@ public final class FileSystemMap<S extends FileSystem> {
             return fileSystem;
         } finally {
             lock.unlock();
+        }
+    }
+
+    /**
+     * Adds a new file system for a URI if one does not exist yet. It is created using the factory provided in the constructor.
+     * If a file system has already been added for the given URI, the existing file system is returned and no new file system is created.
+     * This can be used for {@link FileSystemProvider#getPath(URI)} to create a new file system automatically. The map argument should then contain
+     * default properties as are necessary to create the file system.
+     *
+     * @param uri The URI for which to add a new file system or return an existing one.
+     * @param env A map of provider specific properties to configure the file system. Ignored if the file system already exists.
+     * @return The new or existing file system.
+     * @throws NullPointerException If the given URI or map is {@code null}.
+     * @throws IOException If the file system could not be created.
+     * @since 2.3
+     */
+    public S addIfNotExists(URI uri, Map<String, ?> env) throws IOException {
+        Objects.requireNonNull(uri);
+        Objects.requireNonNull(env);
+
+        ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+        Lock writeLock = readWriteLock.writeLock();
+
+        // Use a loop, to protect against deletions while waiting
+        while (true) {
+            Lock existingLock = null;
+
+            writeLock.lock();
+            try {
+                synchronized (fileSystems) {
+                    FileSystemRegistration<S> registration = fileSystems.get(uri);
+                    if (registration == null) {
+                        registration = new FileSystemRegistration<>(readWriteLock.readLock());
+                        fileSystems.put(uri, registration);
+                    } else if (registration.fileSystem != null) {
+                        return registration.fileSystem;
+                    } else {
+                        // There is a registration but without a file system, so the original write lock is still acquired.
+                        existingLock = registration.lock;
+                    }
+                }
+                // There is a lock in place - either existingLock is set, or the new read lock is now registered
+                if (existingLock == null) {
+                    S fileSystem = createFileSystem(uri, env);
+                    addNewFileSystem(uri, fileSystem);
+                    return fileSystem;
+                }
+            } finally {
+                writeLock.unlock();
+            }
+
+            // Wait for the existing write lock to be released
+            existingLock.lock();
+            try {
+                synchronized (fileSystems) {
+                    /*
+                     * The existing write lock has been released, so fileSystems.get(uri) either is null or has a file system.
+                     * It will only be null in case the file system has been removed between getting a reference to the read lock and acquiring it.
+                     */
+                    FileSystemRegistration<S> registration = fileSystems.get(uri);
+                    if (registration != null) {
+                        return registration.fileSystem;
+                    }
+                }
+            } finally {
+                existingLock.unlock();
+            }
         }
     }
 
@@ -194,7 +261,8 @@ public final class FileSystemMap<S extends FileSystem> {
     }
 
     /**
-     * Removes a previously added file system. This method should be called when a file system returned by {@link #add(URI, Map)} is closed.
+     * Removes a previously added file system. This method should be called when a file system returned by {@link #add(URI, Map)} or
+     * {@link #addIfNotExists(URI, Map)} is closed.
      * <p>
      * If no file system had been added for the given URI, or if it already had been removed, no error will be thrown.
      *
@@ -252,7 +320,8 @@ public final class FileSystemMap<S extends FileSystem> {
      * Returns the URIs of the currently added file systems. The result is a snapshot of the current state; it will not be updated if a file system
      * is added or removed.
      * <p>
-     * Note that the URIs of file systems that are still being created as part of {@link #add(URI, Map)} will be included in the result.
+     * Note that the URIs of file systems that are still being created as part of {@link #add(URI, Map)} or {@link #addIfNotExists(URI, Map)} will be
+     * included in the result.
      *
      * @return A set with the URIs of the currently added file systems.
      */
@@ -280,6 +349,7 @@ public final class FileSystemMap<S extends FileSystem> {
          * @throws IOException If the file system could not be created.
          * @see FileSystemProvider#newFileSystem(URI, Map)
          * @see FileSystemMap#add(URI, Map)
+         * @see FileSystemMap#addIfNotExists(URI, Map)
          */
         S create(URI uri, Map<String, ?> env) throws IOException;
     }
