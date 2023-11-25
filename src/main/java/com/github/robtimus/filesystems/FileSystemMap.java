@@ -40,11 +40,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * {@link #find(URI)} or {@link #remove(URI)} while a file system is still being created will block until the creation is done (or has failed).
  * However, any call with a different URI will not block until the file system is created.
  * <p>
- * All methods that take a {@link URI} require the same URI to be used. While that is often automatically the case for adding and removing file systems
- * from {@link FileSystemProvider#newFileSystem(URI, Map)} and {@link FileSystem#close()} respectively, and usually also for retrieving file systems
- * from {@link FileSystemProvider#getFileSystem(URI)}, {@link FileSystemProvider#getPath(URI)} often needs some conversion or normalization, as it
- * allows sub paths. This class does not enforce any conversion or normalization; however, it does provide access to the currently registered URIs
- * through {@link #uris()}. That returns a {@link NavigableSet}, which allows a closest match to be easily found for a URI.
+ * All methods that take a {@link URI} require the same URI to be used. While that is often automatically the case for adding and removing file
+ * systems from {@link FileSystemProvider#newFileSystem(URI, Map)} and {@link FileSystem#close()} respectively, and usually also for retrieving file
+ * systems from {@link FileSystemProvider#getFileSystem(URI)}, {@link FileSystemProvider#getPath(URI)} often needs some conversion or normalization,
+ * as it allows sub paths. This class does not enforce any conversion or normalization; however, it does provide access to the currently registered
+ * URIs through {@link #uris()}. That returns a {@link NavigableSet}, which allows a closest match to be easily found for a URI.
  *
  * @author Rob Spoor
  * @param <S> The type of file system to maintain.
