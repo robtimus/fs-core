@@ -40,7 +40,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * {@link #find(URI)} or {@link #remove(URI)} while a file system is still being created will block until the creation is done (or has failed).
  * However, any call with a different URI will not block until the file system is created.
  * <p>
- * All methods that take a {@link URI}require the same URI to be used. While that is often automatically the case for adding and removing file systems
+ * All methods that take a {@link URI} require the same URI to be used. While that is often automatically the case for adding and removing file systems
  * from {@link FileSystemProvider#newFileSystem(URI, Map)} and {@link FileSystem#close()} respectively, and usually also for retrieving file systems
  * from {@link FileSystemProvider#getFileSystem(URI)}, {@link FileSystemProvider#getPath(URI)} often needs some conversion or normalization, as it
  * allows sub paths. This class does not enforce any conversion or normalization; however, it does provide access to the currently registered URIs
@@ -334,6 +334,32 @@ public final class FileSystemMap<S extends FileSystem> {
     }
 
     /**
+     * Returns the status for a file system.
+     * Unlike {@link #get(URI)} or {@link #find(URI)}, this method will not block if a file system is still being created. That makes it possible to
+     * distinguish the three different states for a file system: not found, still being created, or already created. See the documentation of
+     * {@link FileSystemStatus} for more information.
+     *
+     * @param uri The URI representing the file system.
+     * @return An object representing the status - not found, still being created or already created.
+     * @throws NullPointerException If the given URI is {@code null}.
+     * @since 2.3
+     */
+    public FileSystemStatus<S> status(URI uri) {
+        Objects.requireNonNull(uri);
+
+        synchronized (fileSystems) {
+            FileSystemRegistration<S> registration = fileSystems.remove(uri);
+            if (registration == null) {
+                return FileSystemStatus.notFound();
+            }
+            if (registration.fileSystem == null) {
+                return FileSystemStatus.creating();
+            }
+            return FileSystemStatus.created(registration.fileSystem);
+        }
+    }
+
+    /**
      * Returns the URIs of the currently added file systems. The result is a snapshot of the current state; it will not be updated if a file system
      * is added or removed.
      * <p>
@@ -384,6 +410,69 @@ public final class FileSystemMap<S extends FileSystem> {
         private void setFileSystem(S fileSystem) {
             this.fileSystem = fileSystem;
             this.lock = null;
+        }
+    }
+
+    /**
+     * The status for a file system. There are three different possibilities:
+     * <ul>
+     *   <li>The file system was not found or has already been removed.
+     *       {@link #notFound()} will return {@code true} and {@link #fileSystem()} will return {@link Optional#empty()}.</li>
+     *   <li>The file system is still being created through {@link FileSystemMap#add(URI, Map)} or {@link FileSystemMap#addIfNotExists(URI, Map)}.
+     *       {@link #notFound()} will return {@code false} and {@link #fileSystem()} will return {@link Optional#empty()}.</li>
+     *   <li>The file system has already been created through {@link FileSystemMap#add(URI, Map)} or {@link FileSystemMap#addIfNotExists(URI, Map)}.
+     *       {@link #notFound()} will return {@code false} and {@link #fileSystem()} will return a non-empty {@link Optional}.</li>
+     * </ul>
+     *
+     * @author Rob Spoor
+     * @param <S> The type of file system.
+     * @since 2.3
+     */
+    public static final class FileSystemStatus<S extends FileSystem> {
+
+        private static final FileSystemStatus<FileSystem> NOT_FOUND = new FileSystemStatus<>(true, Optional.empty());
+        private static final FileSystemStatus<FileSystem> CREATING = new FileSystemStatus<>(false, Optional.empty());
+
+        private final boolean notFound;
+        private final Optional<S> fileSystem;
+
+        private FileSystemStatus(boolean notFound, Optional<S> fileSystem) {
+            this.notFound = notFound;
+            this.fileSystem = fileSystem;
+        }
+
+        /**
+         * Returns whether or not the file system was found.
+         * A {@code false} value means that the file system either has already been created, or is still being created.
+         *
+         * @return {@code true} if the file system was not found, or {@code false} otherwise.
+         */
+        public boolean isNotFound() {
+            return notFound;
+        }
+
+        /**
+         * Returns the file system if available.
+         *
+         * @return An {@link Optional} describing the file system if it has already been created,
+         *         or {@link Optional#empty()} if it is still being created or was not found.
+         */
+        public Optional<S> fileSystem() {
+            return fileSystem;
+        }
+
+        @SuppressWarnings("unchecked")
+        private static <S extends FileSystem> FileSystemStatus<S> notFound() {
+            return (FileSystemStatus<S>) NOT_FOUND;
+        }
+
+        @SuppressWarnings("unchecked")
+        private static <S extends FileSystem> FileSystemStatus<S> creating() {
+            return (FileSystemStatus<S>) CREATING;
+        }
+
+        private static <S extends FileSystem> FileSystemStatus<S> created(S fileSystem) {
+            return new FileSystemStatus<>(false, Optional.of(fileSystem));
         }
     }
 }

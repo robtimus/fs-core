@@ -48,6 +48,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import com.github.robtimus.filesystems.FileSystemMap.FileSystemStatus;
 
 @SuppressWarnings("nls")
 class FileSystemMapTest {
@@ -584,6 +585,112 @@ class FileSystemMapTest {
 
         private void assertNotAdded(FileSystemMap<?> map, URI uri) {
             assertThrows(FileSystemNotFoundException.class, () -> map.get(uri));
+        }
+    }
+
+    @Nested
+    @DisplayName("status")
+    class Status {
+
+        @Test
+        @DisplayName("null URI")
+        void testNullURI() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            assertThrows(NullPointerException.class, () -> map.status(null));
+        }
+
+        @Test
+        @DisplayName("file system not found")
+        void testFileSystemNotFound() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            URI uri = URI.create("urn:test");
+
+            FileSystemStatus<?> status = map.status(uri);
+
+            assertTrue(status.isNotFound());
+            assertIsEmpty(status.fileSystem());
+        }
+
+        @Test
+        @DisplayName("file system already added")
+        void testFileSystemAlreadyAdded() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            @SuppressWarnings("resource")
+            FileSystem added = assertDoesNotThrow(() -> map.add(uri, env));
+
+            assertSame(fileSystem, added);
+
+            FileSystemStatus<?> status = map.status(uri);
+
+            assertFalse(status.isNotFound());
+
+            @SuppressWarnings("resource")
+            FileSystem retrieved = assertIsPresent(status.fileSystem());
+
+            assertSame(fileSystem, retrieved);
+        }
+
+        @Test
+        @DisplayName("file system being added")
+        void testFileSystemBeingAdded() {
+            CountDownLatch createStarted = new CountDownLatch(1);
+            CountDownLatch createEnd = new CountDownLatch(1);
+
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                createStarted.countDown();
+                await(createEnd);
+                return fileSystem;
+            });
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            executor.submit(() -> map.add(uri, env));
+
+            assertTrue(assertDoesNotThrow(() -> createStarted.await(100, TimeUnit.MILLISECONDS)));
+
+            FileSystemStatus<?> status = map.status(uri);
+
+            assertFalse(status.isNotFound());
+            assertIsEmpty(status.fileSystem());
+
+            executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
+        }
+
+        @Test
+        @DisplayName("file system removed")
+        void testFileSystemRemoved() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            @SuppressWarnings("resource")
+            FileSystem added = assertDoesNotThrow(() -> map.add(uri, env));
+
+            assertSame(fileSystem, added);
+
+            assertTrue(map.remove(uri));
+
+            FileSystemStatus<?> status = map.status(uri);
+
+            assertTrue(status.isNotFound());
+            assertIsEmpty(status.fileSystem());
         }
     }
 
