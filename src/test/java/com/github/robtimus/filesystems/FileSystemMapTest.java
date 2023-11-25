@@ -17,6 +17,8 @@
 
 package com.github.robtimus.filesystems;
 
+import static com.github.robtimus.junit.support.OptionalAssertions.assertIsEmpty;
+import static com.github.robtimus.junit.support.OptionalAssertions.assertIsPresent;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -34,6 +36,7 @@ import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -376,6 +379,106 @@ class FileSystemMapTest {
 
             ExecutionException exception = assertThrows(ExecutionException.class, retrieved::get);
             assertInstanceOf(FileSystemNotFoundException.class, exception.getCause());
+        }
+    }
+
+    @Nested
+    @DisplayName("find")
+    class Find {
+
+        @Test
+        @DisplayName("null URI")
+        void testNullURI() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            assertThrows(NullPointerException.class, () -> map.find(null));
+        }
+
+        @Test
+        @DisplayName("file system not found")
+        void testFileSystemNotFound() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            URI uri = URI.create("urn:test");
+
+            assertIsEmpty(map.find(uri));
+        }
+
+        @Test
+        @DisplayName("file system already added")
+        void testFileSystemAlreadyAdded() {
+            @SuppressWarnings("resource")
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            @SuppressWarnings("resource")
+            FileSystem added = assertDoesNotThrow(() -> map.add(uri, env));
+
+            assertSame(fileSystem, added);
+
+            @SuppressWarnings("resource")
+            FileSystem retrieved = assertIsPresent(map.find(uri));
+
+            assertSame(fileSystem, retrieved);
+        }
+
+        @Test
+        @DisplayName("file system being added")
+        void testFileSystemBeingAdded() {
+            CountDownLatch createStarted = new CountDownLatch(1);
+            CountDownLatch createEnd = new CountDownLatch(1);
+
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                createStarted.countDown();
+                await(createEnd);
+                return fileSystem;
+            });
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            executor.submit(() -> map.add(uri, env));
+
+            assertTrue(assertDoesNotThrow(() -> createStarted.await(100, TimeUnit.MILLISECONDS)));
+
+            executor.schedule(createEnd::countDown, 100, TimeUnit.MILLISECONDS);
+
+            @SuppressWarnings("resource")
+            FileSystem retrieved = assertIsPresent(map.find(uri));
+
+            assertSame(fileSystem, retrieved);
+        }
+
+        @Test
+        @DisplayName("file system removed")
+        void testFileSystemRemoved() {
+            CountDownLatch createEnd = new CountDownLatch(1);
+
+            FileSystem fileSystem = mock(FileSystem.class);
+            FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> {
+                await(createEnd);
+                return fileSystem;
+            });
+
+            URI uri = URI.create("urn:test");
+            Map<String, ?> env = Collections.emptyMap();
+
+            executor.submit(() -> map.add(uri, env));
+            executor.submit(() -> map.remove(uri));
+            executor.schedule(createEnd::countDown, 500, TimeUnit.MILLISECONDS);
+            // Let map.get(uri) be called after map.remove(uri) but before the creation of the file system completes
+            Future<Optional<FileSystem>> retrieved = executor.schedule(() -> map.find(uri), 50, TimeUnit.MILLISECONDS);
+
+            Optional<FileSystem> optional = assertDoesNotThrow(() -> retrieved.get());
+            assertIsEmpty(optional);
         }
     }
 
