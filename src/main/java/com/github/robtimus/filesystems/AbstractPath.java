@@ -39,6 +39,12 @@ public abstract class AbstractPath implements Path {
     private static final WatchEvent.Modifier[] NO_MODIFIERS = {};
 
     /**
+     * Creates a new path.
+     */
+    protected AbstractPath() {
+    }
+
+    /**
      * Returns the name of the file or directory denoted by this path as a {@code Path} object.
      * <p>
      * This implementation returns {@link #getName(int) getName(i)}, where {@code i} is equal to {@link #getNameCount()}{@code - 1}.

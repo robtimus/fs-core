@@ -417,11 +417,11 @@ public final class FileSystemMap<S extends FileSystem> {
      * The status for a file system. There are three different possibilities:
      * <ul>
      *   <li>The file system was not found or has already been removed.
-     *       {@link #notFound()} will return {@code true} and {@link #fileSystem()} will return {@link Optional#empty()}.</li>
+     *       {@link #isNotFound()} will return {@code true} and {@link #fileSystem()} will return {@link Optional#empty()}.</li>
      *   <li>The file system is still being created through {@link FileSystemMap#add(URI, Map)} or {@link FileSystemMap#addIfNotExists(URI, Map)}.
-     *       {@link #notFound()} will return {@code false} and {@link #fileSystem()} will return {@link Optional#empty()}.</li>
+     *       {@link #isNotFound()} will return {@code false} and {@link #fileSystem()} will return {@link Optional#empty()}.</li>
      *   <li>The file system has already been created through {@link FileSystemMap#add(URI, Map)} or {@link FileSystemMap#addIfNotExists(URI, Map)}.
-     *       {@link #notFound()} will return {@code false} and {@link #fileSystem()} will return a non-empty {@link Optional}.</li>
+     *       {@link #isNotFound()} will return {@code false} and {@link #fileSystem()} will return a non-empty {@link Optional}.</li>
      * </ul>
      *
      * @author Rob Spoor
