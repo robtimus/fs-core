@@ -73,6 +73,9 @@ public abstract class SimpleAbstractPath extends AbstractPath {
     /** The full path. */
     private final String path;
 
+    /** The normalized path. */
+    private String normalizedPath;
+
     /** The offsets in the full path of all the separate name elements. */
     private int[] offsets;
 
@@ -331,33 +334,67 @@ public abstract class SimpleAbstractPath extends AbstractPath {
      */
     @Override
     public Path normalize() {
+        initNormalizedPath();
+        return path.equals(normalizedPath) ? this : createPath(normalizedPath);
+    }
+
+    /**
+     * Returns a path that is this path with redundant name elements eliminated.
+     * This method is similar to {@link #normalize()} but returns the parent as a string, not a {@link Path}.
+     *
+     * @return A path that is this path with redundant name elements eliminated.
+     * @since 2.3
+     */
+    public final String normalizedPath() {
+        initNormalizedPath();
+        return normalizedPath;
+    }
+
+    /**
+     * Tells whether or not this path is normalized.
+     * A path is normalized if its {@linkplain #path() path} is equal to its {@link #normalizedPath() normalized path}.
+     *
+     * @return {@code true} if this path is normalized, or {@code false} otherwise.
+     * @since 2.3
+     */
+    public final boolean isNormalized() {
+        return path.equals(normalizedPath());
+    }
+
+    private synchronized void initNormalizedPath() {
+        if (normalizedPath == null) {
+            normalizedPath = calculateNormalizedPath();
+        }
+    }
+
+    private String calculateNormalizedPath() {
         int count = getNameCount();
         if (count == 0) {
-            return this;
+            return path;
         }
         Deque<String> nameElements = new ArrayDeque<>(count);
         int nonParentCount = 0;
         for (int i = 0; i < count; i++) {
-            if (equalsNameAt(CURRENT_DIR, i)) {
-                continue;
+            if (!equalsNameAt(CURRENT_DIR, i)) {
+                boolean isParent = equalsNameAt(PARENT_DIR, i);
+                // If this is a parent and there is at least one non-parent, pop it.
+                if (isParent && nonParentCount > 0) {
+                    nameElements.pollLast();
+                    nonParentCount--;
+                    continue;
+                }
+                if (!isAbsolute() || !isParent) {
+                    // For non-absolute paths, this may add a parent if there are only parents, but that's OK.
+                    // Example: foo/../../bar will lead to ../bar
+                    // For absolute paths, any leading .. will not be included though.
+                    String nameElement = nameAt(i);
+                    nameElements.addLast(nameElement);
+                }
+                if (!isParent) {
+                    nonParentCount++;
+                }
             }
-            boolean isParent = equalsNameAt(PARENT_DIR, i);
-            // If this is a parent and there is at least one non-parent, pop it.
-            if (isParent && nonParentCount > 0) {
-                nameElements.pollLast();
-                nonParentCount--;
-                continue;
-            }
-            if (!isAbsolute() || !isParent) {
-                // For non-absolute paths, this may add a parent if there are only parents, but that's OK.
-                // Example: foo/../../bar will lead to ../bar
-                // For absolute paths, any leading .. will not be included though.
-                String nameElement = nameAt(i);
-                nameElements.addLast(nameElement);
-            }
-            if (!isParent) {
-                nonParentCount++;
-            }
+            // else a single . - drop it
         }
         return createPath(nameElements);
     }
@@ -373,7 +410,7 @@ public abstract class SimpleAbstractPath extends AbstractPath {
         return path.regionMatches(thisBegin, name, 0, thisLength);
     }
 
-    private Path createPath(Iterable<String> nameElements) {
+    private String createPath(Iterable<String> nameElements) {
         StringBuilder sb = new StringBuilder(path.length());
         if (isAbsolute()) {
             sb.append('/');
@@ -384,7 +421,7 @@ public abstract class SimpleAbstractPath extends AbstractPath {
                 sb.append('/');
             }
         }
-        return createPath(sb.toString());
+        return sb.toString();
     }
 
     /**

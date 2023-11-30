@@ -19,8 +19,12 @@ package com.github.robtimus.filesystems;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -290,7 +294,19 @@ class SimpleAbstractPathTest {
 
     private void testNormalize(String path, String expected) {
         assertEquals(expected, Paths.get(path).normalize().toString().replace('\\', '/'));
-        assertEquals(expected, new TestPath(path, fs).normalize().toString());
+
+        TestPath testPath = new TestPath(path, fs);
+        TestPath normalized = assertInstanceOf(TestPath.class, testPath.normalize());
+
+        assertEquals(expected, normalized.toString());
+        assertEquals(expected, testPath.normalizedPath());
+        assertTrue(normalized.isNormalized());
+
+        if (testPath.isNormalized()) {
+            assertSame(testPath, normalized);
+        } else {
+            assertNotEquals(testPath, normalized);
+        }
     }
 
     @Test
