@@ -334,8 +334,8 @@ public abstract class SimpleAbstractPath extends AbstractPath {
      */
     @Override
     public Path normalize() {
-        initNormalizedPath();
-        return path.equals(normalizedPath) ? this : createPath(normalizedPath);
+        // isNormalized() calls normalizedPath() which initializes normalizedPath
+        return isNormalized() ? this : createPath(normalizedPath);
     }
 
     /**
