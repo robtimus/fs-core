@@ -86,9 +86,9 @@ public final class FileSystemMap<S extends FileSystem> {
     }
 
     /**
-     * Adds a new file system for a URI. It is created using the factory provided in the constructor.
+     * Adds a new file system. It is created using the factory provided in the constructor.
      *
-     * @param uri The URI for which to add a new file system.
+     * @param uri The URI representing the file system.
      * @param env A map of provider specific properties to configure the file system.
      * @return The new file system.
      * @throws NullPointerException If the given URI or map is {@code null}.
@@ -114,12 +114,12 @@ public final class FileSystemMap<S extends FileSystem> {
     }
 
     /**
-     * Adds a new file system for a URI if one does not exist yet. It is created using the factory provided in the constructor.
+     * Adds a new file system if it does not exist yet. It is created using the factory provided in the constructor.
      * If a file system has already been added for the given URI, the existing file system is returned and no new file system is created.
      * This can be used for {@link FileSystemProvider#getPath(URI)} to create a new file system automatically. The map argument should then contain
-     * default properties as are necessary to create the file system.
+     * default properties as necessary to create the file system.
      *
-     * @param uri The URI for which to add a new file system or return an existing one.
+     * @param uri The URI representing the file system to add or return.
      * @param env A map of provider specific properties to configure the file system. Ignored if the file system already exists.
      * @return The new or existing file system.
      * @throws NullPointerException If the given URI or map is {@code null}.
