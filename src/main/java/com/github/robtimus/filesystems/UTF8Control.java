@@ -70,7 +70,6 @@ public final class UTF8Control extends Control {
         return bundle;
     }
 
-    @SuppressWarnings("resource")
     private InputStream readResource(String resourceName, ClassLoader loader, boolean reload) throws IOException {
         InputStream in = null;
         if (reload) {

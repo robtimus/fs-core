@@ -72,7 +72,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("null URI")
         void testNullURI() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -84,7 +83,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("null env")
         void testNullEnv() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -96,7 +94,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system already added")
         void testFileSystemAlreadyAdded() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -164,7 +161,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("null URI")
         void testNullURI() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -176,7 +172,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("null env")
         void testNullEnv() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -188,7 +183,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system already added")
         void testFileSystemAlreadyAdded() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -290,7 +284,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("null URI")
         void testNullURI() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -300,7 +293,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system not found")
         void testFileSystemNotFound() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -312,7 +304,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system already added")
         void testFileSystemAlreadyAdded() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -390,7 +381,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("null URI")
         void testNullURI() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -400,7 +390,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system not found")
         void testFileSystemNotFound() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -412,7 +401,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system already added")
         void testFileSystemAlreadyAdded() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -490,7 +478,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("null URI")
         void testNullURI() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -500,7 +487,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system not found")
         void testFileSystemNotFound() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -514,7 +500,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system already added")
         void testFileSystemAlreadyAdded() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -595,7 +580,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("null URI")
         void testNullURI() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -605,7 +589,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system not found")
         void testFileSystemNotFound() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -620,7 +603,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system already added")
         void testFileSystemAlreadyAdded() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -673,7 +655,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system removed")
         void testFileSystemRemoved() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -701,7 +682,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("no file system added")
         void testNoFileSystemAdded() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
@@ -711,7 +691,6 @@ class FileSystemMapTest {
         @Test
         @DisplayName("file system already added")
         void testFileSystemAlreadyAdded() {
-            @SuppressWarnings("resource")
             FileSystem fileSystem = mock(FileSystem.class);
             FileSystemMap<FileSystem> map = new FileSystemMap<>((uri, env) -> fileSystem);
 
