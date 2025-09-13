@@ -66,7 +66,7 @@ public abstract class AbstractDirectoryStream<T> implements DirectoryStream<T> {
         if (iterator != null) {
             throw Messages.directoryStream().iteratorAlreadyReturned();
         }
-        iterator = new Iterator<T>() {
+        iterator = new Iterator<>() {
             private T next = null;
             private State state = State.UNSPECIFIED;
 

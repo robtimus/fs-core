@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+/**
+ * A collection of classes that help in writing NIO.2 file systems.
+ */
 module com.github.robtimus.filesystems {
     exports com.github.robtimus.filesystems;
     exports com.github.robtimus.filesystems.attribute;

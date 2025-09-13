@@ -47,7 +47,6 @@ import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.UserPrincipal;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -116,9 +115,9 @@ public final class FileAttributeViewMetadata {
     private FileAttributeViewMetadata(Builder builder) {
         this.viewType = builder.viewType;
         this.viewName = builder.viewName;
-        this.attributes = Collections.unmodifiableMap(new HashMap<>(builder.attributes));
-        this.readableAttributeNames = Collections.unmodifiableSet(new HashSet<>(builder.readableAttributeNames));
-        this.writableAttributeNames = Collections.unmodifiableSet(new HashSet<>(builder.writableAttributeNames));
+        this.attributes = Map.copyOf(builder.attributes);
+        this.readableAttributeNames = Set.copyOf(builder.readableAttributeNames);
+        this.writableAttributeNames = Set.copyOf(builder.writableAttributeNames);
     }
 
     /**

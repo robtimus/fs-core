@@ -154,7 +154,7 @@ public abstract class AbstractPath implements Path {
      */
     @Override
     public Iterator<Path> iterator() {
-        return new Iterator<Path>() {
+        return new Iterator<>() {
             private int index = 0;
 
             @Override
