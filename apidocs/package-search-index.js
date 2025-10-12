@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"m":"com.github.robtimus.filesystems","l":"com.github.robtimus.filesystems"},{"m":"com.github.robtimus.filesystems","l":"com.github.robtimus.filesystems.attribute"}]
