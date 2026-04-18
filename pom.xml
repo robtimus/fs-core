@@ -64,7 +64,7 @@
   <properties>
     <version.java>11</version.java>
 
-    <version.junit-support>3.1</version.junit-support>
+    <version.junit-support>3.2</version.junit-support>
   </properties>
 
   <dependencies>
